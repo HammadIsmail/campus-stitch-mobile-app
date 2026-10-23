@@ -80,7 +80,7 @@ class _CampusAdminScreenState extends State<CampusAdminScreen> {
     } else {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(res.message ?? 'Review failed')),
+        SnackBar(content: Text(res.message ?? 'Unable to complete review. Please try again.')),
       );
     }
   }

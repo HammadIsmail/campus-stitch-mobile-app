@@ -53,6 +53,19 @@ class AppTheme {
           letterSpacing: -0.3,
         ),
       ),
+      tabBarTheme: const TabBarThemeData(
+        labelColor: AppColors.black,
+        unselectedLabelColor: AppColors.zinc500,
+        indicatorColor: AppColors.black,
+        dividerColor: AppColors.zinc200,
+        labelStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+        unselectedLabelStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+      ),
+      dividerTheme: const DividerThemeData(
+        color: AppColors.zinc200,
+        thickness: 1,
+        space: 1,
+      ),
       cardTheme: CardThemeData(
         color: AppColors.white,
         elevation: 0,
@@ -121,6 +134,19 @@ class AppTheme {
           fontWeight: FontWeight.w800,
           letterSpacing: -0.3,
         ),
+      ),
+      tabBarTheme: const TabBarThemeData(
+        labelColor: AppColors.white,
+        unselectedLabelColor: AppColors.zinc500,
+        indicatorColor: AppColors.white,
+        dividerColor: AppColors.zinc800,
+        labelStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+        unselectedLabelStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+      ),
+      dividerTheme: const DividerThemeData(
+        color: AppColors.zinc800,
+        thickness: 1,
+        space: 1,
       ),
       cardTheme: CardThemeData(
         color: AppColors.darkCard,

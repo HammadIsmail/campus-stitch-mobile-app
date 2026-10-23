@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'core/state/theme_state.dart';
 import 'core/theme/app_theme.dart';
 import 'screens/splash_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await ThemeState.instance.init();
   runApp(const CampusStitchApp());
 }
 
@@ -12,13 +14,18 @@ class CampusStitchApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'CampuStitch',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
-      home: const SplashScreen(),
+    return ListenableBuilder(
+      listenable: ThemeState.instance,
+      builder: (context, _) {
+        return MaterialApp(
+          title: 'CampuStitch',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: ThemeState.instance.themeMode,
+          home: const SplashScreen(),
+        );
+      },
     );
   }
 }

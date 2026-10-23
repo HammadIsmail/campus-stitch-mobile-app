@@ -1,0 +1,495 @@
+import 'package:flutter/material.dart';
+import '../../core/theme/app_theme.dart';
+
+class ChatMessage {
+  final String id;
+  final bool isMe;
+  final String text;
+  final String time;
+  final bool isVoice;
+
+  ChatMessage({
+    required this.id,
+    required this.isMe,
+    required this.text,
+    required this.time,
+    this.isVoice = false,
+  });
+}
+
+class ConversationItem {
+  final String id;
+  final String contactName;
+  final bool contactVerified;
+  final String roleBadge;
+  final String contextTitle;
+  final String contextSubtitle;
+  final String lastMessage;
+  final String lastTime;
+  int unreadCount;
+  final List<ChatMessage> messages;
+
+  ConversationItem({
+    required this.id,
+    required this.contactName,
+    required this.contactVerified,
+    required this.roleBadge,
+    required this.contextTitle,
+    required this.contextSubtitle,
+    required this.lastMessage,
+    required this.lastTime,
+    this.unreadCount = 0,
+    required this.messages,
+  });
+}
+
+class MessagesScreen extends StatefulWidget {
+  const MessagesScreen({super.key});
+
+  @override
+  State<MessagesScreen> createState() => _MessagesScreenState();
+}
+
+class _MessagesScreenState extends State<MessagesScreen> {
+  late List<ConversationItem> _conversations;
+
+  @override
+  void initState() {
+    super.initState();
+    _conversations = [
+      ConversationItem(
+        id: '1',
+        contactName: 'Ahmed Raza',
+        contactVerified: true,
+        roleBadge: 'Carpool Host',
+        contextTitle: 'Khurrialwala Morning Ride (8:00 AM)',
+        contextSubtitle: 'Toyota Corolla • 3 seats left',
+        lastMessage: 'I\'ll be waiting at the campus main gate near fountain.',
+        lastTime: '5m ago',
+        unreadCount: 1,
+        messages: [
+          ChatMessage(id: 'm1', isMe: false, text: 'Assalam-o-Alaikum, are you still joining from campus?', time: '7:45 AM'),
+          ChatMessage(id: 'm2', isMe: true, text: 'Walaikum Assalam, yes I have confirmed seat 2.', time: '7:47 AM'),
+          ChatMessage(id: 'm3', isMe: false, text: 'I\'ll be waiting at the campus main gate near fountain.', time: '7:50 AM'),
+        ],
+      ),
+      ConversationItem(
+        id: '2',
+        contactName: 'Sara Khan',
+        contactVerified: true,
+        roleBadge: 'Textbook Buyer',
+        contextTitle: 'Operating System Concepts (Silberschatz)',
+        contextSubtitle: 'Marketplace Listing • Rs. 1,400',
+        lastMessage: 'Can we meet at the CS department library after 2 PM?',
+        lastTime: '45m ago',
+        unreadCount: 1,
+        messages: [
+          ChatMessage(id: 'm4', isMe: false, text: 'Hi, is the Silberschatz OS book still available?', time: '11:00 AM'),
+          ChatMessage(id: 'm5', isMe: true, text: 'Yes, 10th edition in mint condition.', time: '11:15 AM'),
+          ChatMessage(id: 'm6', isMe: false, text: 'Can we meet at the CS department library after 2 PM?', time: '11:30 AM'),
+        ],
+      ),
+      ConversationItem(
+        id: '3',
+        contactName: 'Bilal Cheema',
+        contactVerified: true,
+        roleBadge: 'Cycle Rental',
+        contextTitle: 'Phoenix Commuter Cycle Rental',
+        contextSubtitle: 'Hostel Block B • Rs. 200/day',
+        lastMessage: 'Key and helmet are deposited at the hostel security desk.',
+        lastTime: 'Yesterday',
+        unreadCount: 0,
+        messages: [
+          ChatMessage(id: 'm7', isMe: true, text: 'Hey Bilal, cycle returned safely.', time: 'Yesterday 6:00 PM'),
+          ChatMessage(id: 'm8', isMe: false, text: 'Key and helmet are deposited at the hostel security desk.', time: 'Yesterday 6:05 PM'),
+        ],
+      ),
+    ];
+  }
+
+  void _openChat(ConversationItem conversation) {
+    setState(() {
+      conversation.unreadCount = 0;
+    });
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChatDetailScreen(conversation: conversation),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Campus Messages'),
+      ),
+      body: _conversations.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.chat_bubble_outline,
+                    size: 48,
+                    color: isDark ? AppColors.zinc700 : AppColors.zinc400,
+                  ),
+                  const SizedBox(height: 12),
+                  const Text('No messages yet', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 4),
+                  const Text('Direct messages with carpool hosts and campus peers will appear here.', style: TextStyle(fontSize: 12, color: AppColors.zinc500)),
+                ],
+              ),
+            )
+          : ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: _conversations.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 10),
+              itemBuilder: (context, index) {
+                final convo = _conversations[index];
+
+                return InkWell(
+                  onTap: () => _openChat(convo),
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.darkCard : AppColors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: convo.unreadCount > 0
+                            ? (isDark ? AppColors.white : AppColors.black)
+                            : (isDark ? AppColors.zinc800 : AppColors.zinc200),
+                        width: convo.unreadCount > 0 ? 1.5 : 1,
+                      ),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        CircleAvatar(
+                          radius: 22,
+                          backgroundColor: isDark ? AppColors.zinc800 : AppColors.zinc200,
+                          child: Text(
+                            convo.contactName[0].toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: isDark ? AppColors.white : AppColors.black,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Row(
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            convo.contactName,
+                                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        if (convo.contactVerified) ...[
+                                          const SizedBox(width: 4),
+                                          const Icon(Icons.verified, size: 14, color: AppColors.success),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                  Text(
+                                    convo.lastTime,
+                                    style: const TextStyle(fontSize: 11, color: AppColors.zinc500),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 3),
+                              // Context pill
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: isDark ? AppColors.zinc900 : AppColors.zinc100,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  convo.contextTitle,
+                                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.zinc500),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                convo.lastMessage,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: convo.unreadCount > 0 ? FontWeight.w700 : FontWeight.w500,
+                                  color: convo.unreadCount > 0
+                                      ? (isDark ? AppColors.white : AppColors.black)
+                                      : (isDark ? AppColors.zinc400 : AppColors.zinc600),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (convo.unreadCount > 0) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: isDark ? AppColors.white : AppColors.black,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              '${convo.unreadCount}',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                                color: isDark ? AppColors.black : AppColors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+    );
+  }
+}
+
+class ChatDetailScreen extends StatefulWidget {
+  final ConversationItem conversation;
+
+  const ChatDetailScreen({super.key, required this.conversation});
+
+  @override
+  State<ChatDetailScreen> createState() => _ChatDetailScreenState();
+}
+
+class _ChatDetailScreenState extends State<ChatDetailScreen> {
+  final _messageController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _sendMessage() {
+    final text = _messageController.text.trim();
+    if (text.isEmpty) return;
+
+    setState(() {
+      widget.conversation.messages.add(
+        ChatMessage(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          isMe: true,
+          text: text,
+          time: 'Just now',
+        ),
+      );
+    });
+
+    _messageController.clear();
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Scaffold(
+      appBar: AppBar(
+        titleSpacing: 0,
+        title: Row(
+          children: [
+            CircleAvatar(
+              radius: 16,
+              backgroundColor: isDark ? AppColors.zinc800 : AppColors.zinc200,
+              child: Text(
+                widget.conversation.contactName[0].toUpperCase(),
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: isDark ? AppColors.white : AppColors.black,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          widget.conversation.contactName,
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (widget.conversation.contactVerified) ...[
+                        const SizedBox(width: 4),
+                        const Icon(Icons.verified, size: 14, color: AppColors.success),
+                      ],
+                    ],
+                  ),
+                  Text(
+                    widget.conversation.contextTitle,
+                    style: const TextStyle(fontSize: 10, color: AppColors.zinc500),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      body: Column(
+        children: [
+          // Context bar
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            color: isDark ? AppColors.zinc900 : AppColors.zinc100,
+            child: Row(
+              children: [
+                const Icon(Icons.info_outline, size: 14, color: AppColors.zinc500),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Campus Context: ${widget.conversation.contextSubtitle}',
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.zinc500),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+
+          // Messages List
+          Expanded(
+            child: ListView.builder(
+              controller: _scrollController,
+              padding: const EdgeInsets.all(16),
+              itemCount: widget.conversation.messages.length,
+              itemBuilder: (context, index) {
+                final msg = widget.conversation.messages[index];
+                final isMe = msg.isMe;
+
+                return Align(
+                  alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: isMe
+                          ? (isDark ? AppColors.white : AppColors.black)
+                          : (isDark ? AppColors.darkCard : AppColors.zinc100),
+                      borderRadius: BorderRadius.only(
+                        topLeft: const Radius.circular(16),
+                        topRight: const Radius.circular(16),
+                        bottomLeft: Radius.circular(isMe ? 16 : 4),
+                        bottomRight: Radius.circular(isMe ? 4 : 16),
+                      ),
+                      border: Border.all(
+                        color: isMe
+                            ? Colors.transparent
+                            : (isDark ? AppColors.zinc800 : AppColors.zinc200),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          msg.text,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: isMe
+                                ? (isDark ? AppColors.black : AppColors.white)
+                                : (isDark ? AppColors.white : AppColors.black),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          msg.time,
+                          style: TextStyle(
+                            fontSize: 9,
+                            color: isMe
+                                ? (isDark ? AppColors.zinc600 : AppColors.zinc400)
+                                : AppColors.zinc500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+
+          // Input field
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkCard : AppColors.white,
+              border: Border(
+                top: BorderSide(color: isDark ? AppColors.zinc800 : AppColors.zinc200),
+              ),
+            ),
+            child: SafeArea(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _messageController,
+                      decoration: const InputDecoration(
+                        hintText: 'Type a message to peer...',
+                        contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      ),
+                      onSubmitted: (_) => _sendMessage(),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton.filled(
+                    style: IconButton.styleFrom(
+                      backgroundColor: isDark ? AppColors.white : AppColors.black,
+                      foregroundColor: isDark ? AppColors.black : AppColors.white,
+                    ),
+                    onPressed: _sendMessage,
+                    icon: const Icon(Icons.send, size: 18),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

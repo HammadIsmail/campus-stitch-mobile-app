@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import '../../core/state/auth_state.dart';
 import '../../core/theme/app_theme.dart';
 import '../admin/campus_admin_screen.dart';
+import '../notifications/notifications_screen.dart';
+import '../messages/messages_screen.dart';
+import '../search/campus_search_screen.dart';
+import '../voice/voice_search_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final Function(int)? onNavigateTab;
@@ -10,6 +14,8 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return ListenableBuilder(
       listenable: AuthState.instance,
       builder: (context, _) {
@@ -20,14 +26,15 @@ class HomeScreen extends StatelessWidget {
 
         return Scaffold(
           appBar: AppBar(
+            titleSpacing: 16,
             title: Row(
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(9),
                   child: Image.asset(
                     'assets/images/logo.png',
-                    width: 34,
-                    height: 34,
+                    width: 32,
+                    height: 32,
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -38,7 +45,7 @@ class HomeScreen extends StatelessWidget {
                     children: [
                       const Text(
                         'CampuStitch',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: -0.3),
                       ),
                       Text(
                         '$campusName • $universityName',
@@ -50,12 +57,150 @@ class HomeScreen extends StatelessWidget {
                 ),
               ],
             ),
+            actions: [
+              // Search Action
+              IconButton(
+                icon: const Icon(Icons.search, size: 21),
+                tooltip: 'Search Campus',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const CampusSearchScreen()),
+                  );
+                },
+              ),
+              // Voice Assistant Action
+              IconButton(
+                icon: const Icon(Icons.mic_none, size: 21),
+                tooltip: 'Voice Search & AI Assistant',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const VoiceSearchScreen()),
+                  );
+                },
+              ),
+              // Messages Action with Unread Indicator
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.chat_bubble_outline, size: 20),
+                    tooltip: 'Campus Messages',
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const MessagesScreen()),
+                      );
+                    },
+                  ),
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: Container(
+                      width: 7,
+                      height: 7,
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.white : AppColors.black,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isDark ? AppColors.darkCard : AppColors.white,
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              // Notifications Action with Unread Badge
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.notifications_none, size: 22),
+                    tooltip: 'Notifications',
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                      );
+                    },
+                  ),
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: Container(
+                      width: 7,
+                      height: 7,
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.white : AppColors.black,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isDark ? AppColors.darkCard : AppColors.white,
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 4),
+            ],
           ),
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Quick Search Bar with Voice Tap Target
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const CampusSearchScreen()),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.zinc900 : AppColors.zinc100,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: isDark ? AppColors.zinc800 : AppColors.zinc200,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.search, size: 18, color: AppColors.zinc500),
+                        const SizedBox(width: 10),
+                        const Expanded(
+                          child: Text(
+                            'Search rides, gear, discussions...',
+                            style: TextStyle(fontSize: 13, color: AppColors.zinc500, fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const VoiceSearchScreen()),
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: isDark ? AppColors.zinc800 : AppColors.zinc200,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(Icons.mic, size: 16, color: AppColors.zinc500),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+
                 // Tenant Isolation Indicator Banner
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -80,7 +225,6 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(height: 16),
 
                 // Campus Admin Student Verification Shortcut
-
                 if (isCampusAdmin) ...[
                   GestureDetector(
                     onTap: () {
@@ -196,15 +340,11 @@ class HomeScreen extends StatelessWidget {
                       children: [
                         CircleAvatar(
                           radius: 22,
-                          backgroundColor: Theme.of(context).brightness == Brightness.dark
-                              ? AppColors.white
-                              : AppColors.black,
+                          backgroundColor: isDark ? AppColors.white : AppColors.black,
                           child: Text(
                             (user?.name.isNotEmpty == true ? user!.name[0] : 'S').toUpperCase(),
                             style: TextStyle(
-                              color: Theme.of(context).brightness == Brightness.dark
-                                  ? AppColors.black
-                                  : AppColors.white,
+                              color: isDark ? AppColors.black : AppColors.white,
                               fontWeight: FontWeight.w800,
                             ),
                           ),
@@ -261,6 +401,8 @@ class HomeScreen extends StatelessWidget {
     required IconData icon,
     required VoidCallback onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -274,9 +416,7 @@ class HomeScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? AppColors.zinc800
-                      : AppColors.zinc100,
+                  color: isDark ? AppColors.zinc800 : AppColors.zinc100,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon, size: 20),

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../core/api/api_client.dart';
 import '../../core/state/auth_state.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/tenant_model.dart';
@@ -154,7 +155,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         return;
       }
       setState(() {
-        _error = otpRes.message ?? 'Unable to send verification code. Please check your email.';
+        _error = ApiClient.humanizeError(otpRes.message, otpRes.statusCode);
       });
       return;
     }
@@ -307,7 +308,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     countdownTimer?.cancel();
                                     countdownTimer = null;
                                   } else {
-                                    otpError = res.message ?? 'Failed to resend code';
+                                    otpError = ApiClient.humanizeError(res.message, res.statusCode);
                                   }
                                 });
                               },
@@ -374,7 +375,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               (route) => false,
                             );
                           } else {
-                            final err = AuthState.instance.errorMessage ?? 'Verification failed';
+                            final err = ApiClient.humanizeError(AuthState.instance.errorMessage ?? 'Verification failed. Please try again.');
                             if (err.toLowerCase().contains('already exists')) {
                               countdownTimer?.cancel();
                               dialogNav.pop();
@@ -662,7 +663,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
-                  hintText: 'student@uet.edu.pk',
+                  hintText: 'student@campus.edu.pk',
                   prefixIcon: const Icon(Icons.email_outlined, size: 18),
                   enabledBorder: _emailExists
                       ? OutlineInputBorder(

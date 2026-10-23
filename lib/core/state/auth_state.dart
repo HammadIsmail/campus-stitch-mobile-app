@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/user_model.dart';
 import '../../services/auth_service.dart';
+import '../api/api_client.dart';
 
 class AuthState extends ChangeNotifier {
   static final AuthState instance = AuthState._internal();
@@ -50,13 +51,13 @@ class AuthState extends ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        _errorMessage = res.message ?? 'Invalid credentials';
+        _errorMessage = ApiClient.humanizeError(res.message, res.statusCode);
         _isLoading = false;
         notifyListeners();
         return false;
       }
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = ApiClient.humanizeError(e);
       _isLoading = false;
       notifyListeners();
       return false;
@@ -99,13 +100,13 @@ class AuthState extends ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        _errorMessage = res.message ?? 'Sign-up failed';
+        _errorMessage = ApiClient.humanizeError(res.message, res.statusCode);
         _isLoading = false;
         notifyListeners();
         return false;
       }
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = ApiClient.humanizeError(e);
       _isLoading = false;
       notifyListeners();
       return false;

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/api/api_client.dart';
 import '../../core/state/auth_state.dart';
 import '../../core/theme/app_theme.dart';
 import '../../services/auth_service.dart';
@@ -33,7 +34,7 @@ class _SignInScreenState extends State<SignInScreen> {
     final password = _passwordController.text.trim();
 
     if (email.isEmpty || password.isEmpty) {
-      setState(() => _error = 'Please enter both email and password');
+      setState(() => _error = 'Please enter both your campus email and password');
       return;
     }
 
@@ -53,15 +54,9 @@ class _SignInScreenState extends State<SignInScreen> {
       );
     } else {
       setState(() {
-        _error = AuthState.instance.errorMessage ?? 'Sign in failed. Check credentials.';
+        _error = ApiClient.humanizeError(AuthState.instance.errorMessage ?? 'Sign in failed. Please check your credentials.');
       });
     }
-  }
-
-  void _fillPreset(String email, String password) {
-    _emailController.text = email;
-    _passwordController.text = password;
-    setState(() => _error = null);
   }
 
   Future<void> _showForgotPasswordDialog() async {
@@ -113,7 +108,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       controller: resetEmailController,
                       keyboardType: TextInputType.emailAddress,
                       decoration: const InputDecoration(
-                        hintText: 'student@uet.edu.pk',
+                        hintText: 'student@campus.edu.pk',
                         prefixIcon: Icon(Icons.mail_outline, size: 18),
                       ),
                     ),
@@ -149,7 +144,7 @@ class _SignInScreenState extends State<SignInScreen> {
                                 statusMessage = 'Reset instructions sent! Please check your email inbox.';
                               } else {
                                 isSuccess = false;
-                                statusMessage = res.message ?? 'Unable to send reset email. Please try again.';
+                                statusMessage = ApiClient.humanizeError(res.message, res.statusCode);
                               }
                             });
                           },
@@ -171,8 +166,6 @@ class _SignInScreenState extends State<SignInScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -212,51 +205,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     color: AppColors.zinc500,
                   ),
                 ),
-                const SizedBox(height: 28),
-
-                // Quick One-Tap Demo Profiles
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.zinc900 : AppColors.zinc100,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: isDark ? AppColors.zinc800 : AppColors.zinc200,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'QUICK DEMO LOGINS',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.8,
-                          color: AppColors.zinc500,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          ActionChip(
-                            avatar: const Icon(Icons.admin_panel_settings, size: 14, color: AppColors.campusAdmin),
-                            label: const Text('Campus Admin', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
-                            onPressed: () => _fillPreset('admin@uet.edu.pk', 'AdminPass123!'),
-                          ),
-                          ActionChip(
-                            avatar: const Icon(Icons.school, size: 14, color: AppColors.success),
-                            label: const Text('Student', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
-                            onPressed: () => _fillPreset('student@uet.edu.pk', 'StudentPass123!'),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 12),
 
                 // Error Banner
                 if (_error != null) ...[
@@ -329,7 +278,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(
-                    hintText: 'student@uet.edu.pk',
+                    hintText: 'student@campus.edu.pk',
                     prefixIcon: Icon(Icons.mail_outline, size: 18),
                   ),
                 ),
