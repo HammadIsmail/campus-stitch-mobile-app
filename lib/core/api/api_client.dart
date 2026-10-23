@@ -1,5 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../storage/session_store.dart';
 
@@ -18,6 +19,8 @@ class ApiResponse {
 }
 
 class ApiClient {
+  static const Duration _timeout = Duration(seconds: 15);
+
   static Future<Map<String, String>> _buildHeaders([Map<String, String>? customHeaders]) async {
     final headers = <String, String>{
       'Content-Type': 'application/json',
@@ -48,11 +51,21 @@ class ApiClient {
   static Future<ApiResponse> get(String url, {Map<String, String>? headers}) async {
     try {
       final requestHeaders = await _buildHeaders(headers);
-      debugPrint('GET: $url');
-      final res = await http.get(Uri.parse(url), headers: requestHeaders);
+      final res = await http.get(Uri.parse(url), headers: requestHeaders).timeout(_timeout);
       return _parseResponse(res);
+    } on TimeoutException {
+      return ApiResponse(
+        success: false,
+        message: 'Connection timed out. Please check your internet connection.',
+        statusCode: 408,
+      );
+    } on SocketException {
+      return ApiResponse(
+        success: false,
+        message: 'Unable to reach the campus server. Please verify your connection.',
+        statusCode: 503,
+      );
     } catch (e) {
-      debugPrint('GET error on $url: $e');
       return ApiResponse(success: false, message: e.toString(), statusCode: 500);
     }
   }
@@ -60,15 +73,25 @@ class ApiClient {
   static Future<ApiResponse> post(String url, {dynamic body, Map<String, String>? headers}) async {
     try {
       final requestHeaders = await _buildHeaders(headers);
-      debugPrint('POST: $url');
       final res = await http.post(
         Uri.parse(url),
         headers: requestHeaders,
         body: body != null ? jsonEncode(body) : null,
-      );
+      ).timeout(_timeout);
       return _parseResponse(res);
+    } on TimeoutException {
+      return ApiResponse(
+        success: false,
+        message: 'Connection timed out. Please check your internet connection.',
+        statusCode: 408,
+      );
+    } on SocketException {
+      return ApiResponse(
+        success: false,
+        message: 'Unable to reach the campus server. Please verify your connection.',
+        statusCode: 503,
+      );
     } catch (e) {
-      debugPrint('POST error on $url: $e');
       return ApiResponse(success: false, message: e.toString(), statusCode: 500);
     }
   }
@@ -76,15 +99,25 @@ class ApiClient {
   static Future<ApiResponse> patch(String url, {dynamic body, Map<String, String>? headers}) async {
     try {
       final requestHeaders = await _buildHeaders(headers);
-      debugPrint('PATCH: $url');
       final res = await http.patch(
         Uri.parse(url),
         headers: requestHeaders,
         body: body != null ? jsonEncode(body) : null,
-      );
+      ).timeout(_timeout);
       return _parseResponse(res);
+    } on TimeoutException {
+      return ApiResponse(
+        success: false,
+        message: 'Connection timed out. Please check your internet connection.',
+        statusCode: 408,
+      );
+    } on SocketException {
+      return ApiResponse(
+        success: false,
+        message: 'Unable to reach the campus server. Please verify your connection.',
+        statusCode: 503,
+      );
     } catch (e) {
-      debugPrint('PATCH error on $url: $e');
       return ApiResponse(success: false, message: e.toString(), statusCode: 500);
     }
   }
@@ -92,15 +125,25 @@ class ApiClient {
   static Future<ApiResponse> delete(String url, {dynamic body, Map<String, String>? headers}) async {
     try {
       final requestHeaders = await _buildHeaders(headers);
-      debugPrint('DELETE: $url');
       final res = await http.delete(
         Uri.parse(url),
         headers: requestHeaders,
         body: body != null ? jsonEncode(body) : null,
-      );
+      ).timeout(_timeout);
       return _parseResponse(res);
+    } on TimeoutException {
+      return ApiResponse(
+        success: false,
+        message: 'Connection timed out. Please check your internet connection.',
+        statusCode: 408,
+      );
+    } on SocketException {
+      return ApiResponse(
+        success: false,
+        message: 'Unable to reach the campus server. Please verify your connection.',
+        statusCode: 503,
+      );
     } catch (e) {
-      debugPrint('DELETE error on $url: $e');
       return ApiResponse(success: false, message: e.toString(), statusCode: 500);
     }
   }
@@ -109,7 +152,11 @@ class ApiClient {
     try {
       final body = jsonDecode(res.body);
       if (body is Map<String, dynamic>) {
-        final success = body['success'] == true || (res.statusCode >= 200 && res.statusCode < 300);
+        final hasExplicitSuccess = body.containsKey('success');
+        final success = hasExplicitSuccess
+            ? body['success'] == true
+            : (res.statusCode >= 200 && res.statusCode < 300);
+
         return ApiResponse(
           success: success,
           data: body,
@@ -126,6 +173,7 @@ class ApiClient {
       return ApiResponse(
         success: res.statusCode >= 200 && res.statusCode < 300,
         data: res.body,
+        message: res.statusCode >= 400 ? 'Server responded with code ${res.statusCode}' : null,
         statusCode: res.statusCode,
       );
     }

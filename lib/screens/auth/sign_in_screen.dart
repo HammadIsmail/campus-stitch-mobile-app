@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../core/state/auth_state.dart';
 import '../../core/theme/app_theme.dart';
+import '../../services/auth_service.dart';
 import '../main_navigation_screen.dart';
 import 'sign_up_screen.dart';
+import '../legal/terms_screen.dart';
+import '../legal/privacy_screen.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -61,6 +64,111 @@ class _SignInScreenState extends State<SignInScreen> {
     setState(() => _error = null);
   }
 
+  Future<void> _showForgotPasswordDialog() async {
+    final resetEmailController = TextEditingController(text: _emailController.text.trim());
+    bool isSending = false;
+    String? statusMessage;
+    bool isSuccess = false;
+
+    await showDialog(
+      context: context,
+      builder: (dialogCtx) {
+        return StatefulBuilder(
+          builder: (builderCtx, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: const Text('Reset Password', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'Enter your registered campus email and we will dispatch a secure password reset link to your inbox.',
+                    style: TextStyle(fontSize: 13, color: AppColors.zinc500),
+                  ),
+                  const SizedBox(height: 16),
+                  if (statusMessage != null) ...[
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: (isSuccess ? AppColors.success : AppColors.error).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: (isSuccess ? AppColors.success : AppColors.error).withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Text(
+                        statusMessage!,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isSuccess ? AppColors.success : AppColors.error,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  if (!isSuccess)
+                    TextField(
+                      controller: resetEmailController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: const InputDecoration(
+                        hintText: 'student@uet.edu.pk',
+                        prefixIcon: Icon(Icons.mail_outline, size: 18),
+                      ),
+                    ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogCtx),
+                  child: Text(isSuccess ? 'Close' : 'Cancel'),
+                ),
+                if (!isSuccess)
+                  ElevatedButton(
+                    onPressed: isSending
+                        ? null
+                        : () async {
+                            final email = resetEmailController.text.trim();
+                            if (email.isEmpty || !email.contains('@')) {
+                              setDialogState(() {
+                                statusMessage = 'Please enter a valid email address';
+                                isSuccess = false;
+                              });
+                              return;
+                            }
+                            setDialogState(() {
+                              isSending = true;
+                              statusMessage = null;
+                            });
+                            final res = await AuthService.forgotPassword(email);
+                            setDialogState(() {
+                              isSending = false;
+                              if (res.success) {
+                                isSuccess = true;
+                                statusMessage = 'Reset instructions sent! Please check your email inbox.';
+                              } else {
+                                isSuccess = false;
+                                statusMessage = res.message ?? 'Unable to send reset email. Please try again.';
+                              }
+                            });
+                          },
+                    child: isSending
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Text('Send Reset Link'),
+                  ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -75,23 +183,13 @@ class _SignInScreenState extends State<SignInScreen> {
               children: [
                 // Logo & Header
                 Center(
-                  child: Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.white : AppColors.black,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Center(
-                      child: Text(
-                        'CS',
-                        style: TextStyle(
-                          color: isDark ? AppColors.black : AppColors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(18),
+                    child: Image.asset(
+                      'assets/images/logo.png',
+                      width: 64,
+                      height: 64,
+                      fit: BoxFit.cover,
                     ),
                   ),
                 ),
@@ -146,12 +244,12 @@ class _SignInScreenState extends State<SignInScreen> {
                           ActionChip(
                             avatar: const Icon(Icons.admin_panel_settings, size: 14, color: AppColors.campusAdmin),
                             label: const Text('Campus Admin', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
-                            onPressed: () => _fillPreset('admin.uet@campusstitch.com', 'AdminPass123!'),
+                            onPressed: () => _fillPreset('admin@uet.edu.pk', 'AdminPass123!'),
                           ),
                           ActionChip(
                             avatar: const Icon(Icons.school, size: 14, color: AppColors.success),
                             label: const Text('Student', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
-                            onPressed: () => _fillPreset('hammad.ismail@uet.edu.pk', 'StudentPass123!'),
+                            onPressed: () => _fillPreset('student@uet.edu.pk', 'StudentPass123!'),
                           ),
                         ],
                       ),
@@ -163,26 +261,58 @@ class _SignInScreenState extends State<SignInScreen> {
                 // Error Banner
                 if (_error != null) ...[
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     decoration: BoxDecoration(
                       color: AppColors.error.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
                     ),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.error_outline, size: 16, color: AppColors.error),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            _error!,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: AppColors.error,
-                              fontWeight: FontWeight.w600,
+                        Row(
+                          children: [
+                            const Icon(Icons.error_outline, size: 16, color: AppColors.error),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _error!,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.error,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (_error!.toLowerCase().contains('invalid') ||
+                            _error!.toLowerCase().contains('credential') ||
+                            _error!.toLowerCase().contains('not found')) ...[
+                          const SizedBox(height: 8),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(builder: (_) => const SignUpScreen()),
+                              );
+                            },
+                            child: const Row(
+                              children: [
+                                Icon(Icons.arrow_forward, size: 13, color: AppColors.error),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Don\'t have an account? Register here',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.error,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ),
+                        ],
                       ],
                     ),
                   ),
@@ -206,9 +336,26 @@ class _SignInScreenState extends State<SignInScreen> {
                 const SizedBox(height: 16),
 
                 // Password field
-                const Text(
-                  'Password',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Password',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                    ),
+                    GestureDetector(
+                      onTap: _showForgotPasswordDialog,
+                      child: const Text(
+                        'Forgot Password?',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.zinc500,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 6),
                 TextField(
@@ -260,6 +407,56 @@ class _SignInScreenState extends State<SignInScreen> {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w800,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // Terms & Privacy Footnote
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 4,
+                  children: [
+                    const Text(
+                      'By continuing, you agree to our',
+                      style: TextStyle(fontSize: 11, color: AppColors.zinc500),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const TermsScreen()),
+                        );
+                      },
+                      child: const Text(
+                        'Terms',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                    const Text(
+                      '&',
+                      style: TextStyle(fontSize: 11, color: AppColors.zinc500),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const PrivacyScreen()),
+                        );
+                      },
+                      child: const Text(
+                        'Privacy Policy',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
                           decoration: TextDecoration.underline,
                         ),
                       ),

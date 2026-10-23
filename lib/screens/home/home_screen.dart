@@ -22,26 +22,13 @@ class HomeScreen extends StatelessWidget {
           appBar: AppBar(
             title: Row(
               children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? AppColors.white
-                        : AppColors.black,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Center(
-                    child: Text(
-                      'CS',
-                      style: TextStyle(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? AppColors.black
-                            : AppColors.white,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 14,
-                      ),
-                    ),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(9),
+                  child: Image.asset(
+                    'assets/images/logo.png',
+                    width: 34,
+                    height: 34,
+                    fit: BoxFit.cover,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -92,7 +79,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
 
-                // Campus Admin KYC Shortcut
+                // Campus Admin Student Verification Shortcut
 
                 if (isCampusAdmin) ...[
                   GestureDetector(
@@ -135,7 +122,7 @@ class HomeScreen extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 const Text(
-                                  'Campus KYC Portal',
+                                  'Campus Verification Portal',
                                   style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15),
                                 ),
                                 const SizedBox(height: 2),

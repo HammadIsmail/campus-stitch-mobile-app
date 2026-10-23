@@ -39,7 +39,7 @@ class _CampusAdminScreenState extends State<CampusAdminScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(action == 'approved' ? 'Approve Student KYC?' : 'Reject KYC Request?'),
+        title: Text(action == 'approved' ? 'Approve Student Verification?' : 'Reject Verification Request?'),
         content: Text(
           action == 'approved'
               ? 'This will verify ${item.name} (${item.studentId}) for ${item.campusName} with instant peer-to-peer trust.'
@@ -94,7 +94,7 @@ class _CampusAdminScreenState extends State<CampusAdminScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Campus KYC Portal'),
+            const Text('Campus Verification Portal'),
             Text(
               campusName,
               style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.zinc500),
@@ -123,7 +123,7 @@ class _CampusAdminScreenState extends State<CampusAdminScreen> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'KYC Review Queue for $campusName. Side-by-side verification prevents identity fraud.',
+                          'Identity Review Queue for $campusName. Side-by-side verification prevents identity fraud.',
                           style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.campusAdmin),
                         ),
                       ),
@@ -156,7 +156,7 @@ class _CampusAdminScreenState extends State<CampusAdminScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'No pending student KYC requests for $campusName',
+                                'No pending student verification requests for $campusName',
                                 style: const TextStyle(fontSize: 12, color: AppColors.zinc500),
                               ),
                             ],

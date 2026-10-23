@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 class AppColors {
   // Monochrome Primary
   static const Color black = Color(0xFF09090B);
+  static const Color primary = Color(0xFF09090B);
   static const Color white = Color(0xFFFFFFFF);
   static const Color darkCard = Color(0xFF121215);
   static const Color lightBg = Color(0xFFF8F9FA);

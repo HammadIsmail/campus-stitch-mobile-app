@@ -73,6 +73,7 @@ class AuthState extends ChangeNotifier {
     required String campusId,
     required String campusName,
     String? program,
+    String? code,
   }) async {
     _isLoading = true;
     _errorMessage = null;
@@ -89,6 +90,7 @@ class AuthState extends ChangeNotifier {
         campusId: campusId,
         campusName: campusName,
         program: program,
+        code: code,
       );
 
       if (res.success && res.data is Map && (res.data as Map)['user'] != null) {

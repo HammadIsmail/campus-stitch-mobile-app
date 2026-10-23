@@ -11,6 +11,17 @@ class SessionStore {
   static File? _getFile() {
     if (kIsWeb) return null;
     try {
+      if (Platform.isAndroid) {
+        // OWASP M2: Check isolated internal app data directory first to prevent multi-user / adb data leaks
+        final internalDir = Directory('/data/user/0/com.campusstitch.app/files');
+        if (internalDir.existsSync()) {
+          return File('${internalDir.path}/$_sessionFileName');
+        }
+        final fallbackInternal = Directory('/data/data/com.campusstitch.app/files');
+        if (fallbackInternal.existsSync()) {
+          return File('${fallbackInternal.path}/$_sessionFileName');
+        }
+      }
       final dir = Directory.systemTemp;
       return File('${dir.path}/$_sessionFileName');
     } catch (_) {

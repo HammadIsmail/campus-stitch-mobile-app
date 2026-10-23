@@ -3,6 +3,8 @@ import '../../core/state/auth_state.dart';
 import '../../core/theme/app_theme.dart';
 import '../admin/campus_admin_screen.dart';
 import '../auth/sign_in_screen.dart';
+import '../legal/terms_screen.dart';
+import '../legal/privacy_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -114,7 +116,7 @@ class ProfileScreen extends StatelessWidget {
                                 ),
                               ),
                               child: Text(
-                                user?.isVerified == true ? 'KYC VERIFIED' : 'KYC PENDING',
+                                user?.isVerified == true ? 'VERIFIED STUDENT' : 'VERIFICATION PENDING',
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w900,
@@ -169,10 +171,77 @@ class ProfileScreen extends StatelessWidget {
                       );
                     },
                     icon: const Icon(Icons.admin_panel_settings),
-                    label: const Text('Open Campus KYC Verification Console'),
+                    label: const Text('Open Campus Verification Console'),
                   ),
                   const SizedBox(height: 16),
                 ],
+
+                // Legal & Compliance Card
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'LEGAL & POLICIES',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.zinc500,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          dense: true,
+                          leading: const Icon(Icons.description_outlined, size: 20),
+                          title: const Text('Terms of Service', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                          subtitle: const Text('Platform rules & student responsibilities', style: TextStyle(fontSize: 11)),
+                          trailing: const Icon(Icons.chevron_right, size: 18),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const TermsScreen()),
+                            );
+                          },
+                        ),
+                        const Divider(height: 8),
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          dense: true,
+                          leading: const Icon(Icons.shield_outlined, size: 20, color: AppColors.success),
+                          title: const Text('Privacy Policy', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                          subtitle: const Text('Google Play compliant data safety & storage', style: TextStyle(fontSize: 11)),
+                          trailing: const Icon(Icons.chevron_right, size: 18),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const PrivacyScreen()),
+                            );
+                          },
+                        ),
+                        const Divider(height: 8),
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          dense: true,
+                          leading: const Icon(Icons.delete_outline, size: 20, color: AppColors.error),
+                          title: const Text('Account & Data Deletion', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.error)),
+                          subtitle: const Text('Request permanent removal of student data', style: TextStyle(fontSize: 11)),
+                          trailing: const Icon(Icons.chevron_right, size: 18),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const PrivacyScreen()),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
 
                 // Sign Out Button
                 ElevatedButton.icon(

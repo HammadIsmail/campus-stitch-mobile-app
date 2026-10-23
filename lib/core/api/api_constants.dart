@@ -1,24 +1,21 @@
-import 'package:flutter/foundation.dart';
-
 class ApiConstants {
-  // Default development URLs:
-  // - Android Emulator: http://10.0.2.2:3000
-  // - iOS Simulator / macOS / Windows / Web: http://localhost:3000
-  // - Physical Device: Set to your LAN IP (e.g. http://192.168.1.10:3000)
-  static String baseUrl = defaultTargetPlatform == TargetPlatform.android
-      ? 'http://10.0.2.2:3000'
-      : 'http://localhost:3000';
+  // Production live Next.js backend on Vercel
+  static String baseUrl = 'https://campus-stitch.vercel.app';
 
   // Auth Endpoints
   static String get signIn => '$baseUrl/api/auth/sign-in';
   static String get signUp => '$baseUrl/api/auth/sign-up';
+  static String get checkEmail => '$baseUrl/api/auth/check-email';
+  static String get sendOtp => '$baseUrl/api/auth/otp/send';
+  static String get forgotPassword => '$baseUrl/api/auth/forgot-password';
+  static String get resetPassword => '$baseUrl/api/auth/reset-password';
   static String get me => '$baseUrl/api/auth/me';
 
   // Tenant Endpoints
   static String get universities => '$baseUrl/api/universities';
   static String get campuses => '$baseUrl/api/campuses';
 
-  // Campus Admin KYC Endpoint
+  // Campus Admin Verification Endpoint
   static String get verifications => '$baseUrl/api/verifications';
 
   // Domain Feature Endpoints

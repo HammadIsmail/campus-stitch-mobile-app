@@ -28,6 +28,27 @@ class AuthService {
     return response;
   }
 
+  static Future<ApiResponse> checkEmail(String email) async {
+    return await ApiClient.post(
+      ApiConstants.checkEmail,
+      body: {'email': email.trim().toLowerCase()},
+    );
+  }
+
+  static Future<ApiResponse> sendOtp(String email) async {
+    return await ApiClient.post(
+      ApiConstants.sendOtp,
+      body: {'email': email.trim().toLowerCase()},
+    );
+  }
+
+  static Future<ApiResponse> forgotPassword(String email) async {
+    return await ApiClient.post(
+      ApiConstants.forgotPassword,
+      body: {'email': email.trim().toLowerCase()},
+    );
+  }
+
   static Future<ApiResponse> signUp({
     required String name,
     required String email,
@@ -38,6 +59,7 @@ class AuthService {
     required String campusId,
     required String campusName,
     String? program,
+    String? code,
   }) async {
     final response = await ApiClient.post(
       ApiConstants.signUp,
@@ -52,6 +74,7 @@ class AuthService {
         'campusName': campusName,
         'city': campusName,
         'program': program ?? 'BS Computer Science',
+        if (code != null && code.isNotEmpty) 'code': code.trim(),
       },
     );
 
