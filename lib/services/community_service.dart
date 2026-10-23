@@ -8,6 +8,8 @@ class CommunityService {
     String? community,
     String sort = 'hot',
     String? query,
+    int page = 1,
+    int limit = 3,
   }) async {
     final params = <String, String>{};
     if (campusId != null && campusId.isNotEmpty) {
@@ -20,6 +22,8 @@ class CommunityService {
     if (query != null && query.trim().isNotEmpty) {
       params['query'] = query.trim();
     }
+    params['page'] = page.toString();
+    params['limit'] = limit.toString();
 
     final queryString = Uri(queryParameters: params).query;
     final url = '${ApiConstants.communityPosts}?$queryString';

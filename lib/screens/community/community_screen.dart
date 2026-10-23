@@ -16,25 +16,81 @@ class _CommunityScreenState extends State<CommunityScreen> {
   bool _isLoading = true;
   String _selectedSubreddit = 'all';
 
+  final ScrollController _scrollController = ScrollController();
+  int _currentPage = 1;
+  bool _hasMore = true;
+  bool _isLoadingMore = false;
+
   @override
   void initState() {
     super.initState();
     _loadPosts();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 150) {
+      if (!_isLoading && !_isLoadingMore && _hasMore) {
+        _loadMorePosts();
+      }
+    }
   }
 
   Future<void> _loadPosts() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _currentPage = 1;
+      _hasMore = true;
+    });
     try {
       final campusId = AuthState.instance.activeCampusId;
       final posts = await CommunityService.getPosts(
         campusId: campusId,
         community: _selectedSubreddit,
+        page: 1,
+        limit: 3,
       );
-      setState(() => _posts = posts);
+      setState(() {
+        _posts = posts;
+        _hasMore = posts.length >= 3;
+      });
     } catch (e) {
       debugPrint('Error loading posts: $e');
     } finally {
       setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _loadMorePosts() async {
+    if (_isLoadingMore || !_hasMore) return;
+    setState(() => _isLoadingMore = true);
+    try {
+      final campusId = AuthState.instance.activeCampusId;
+      final nextPage = _currentPage + 1;
+      final newPosts = await CommunityService.getPosts(
+        campusId: campusId,
+        community: _selectedSubreddit,
+        page: nextPage,
+        limit: 3,
+      );
+      setState(() {
+        _currentPage = nextPage;
+        final existingIds = _posts.map((p) => p.id).toSet();
+        final uniquePosts = newPosts.where((p) => !existingIds.contains(p.id)).toList();
+        _posts.addAll(uniquePosts);
+        _hasMore = newPosts.length >= 3;
+      });
+    } catch (e) {
+      debugPrint('Error loading more posts: $e');
+    } finally {
+      setState(() => _isLoadingMore = false);
     }
   }
 
@@ -235,10 +291,34 @@ class _CommunityScreenState extends State<CommunityScreen> {
                         ),
                       )
                     : ListView.separated(
+                        controller: _scrollController,
                         padding: const EdgeInsets.all(16),
-                        itemCount: _posts.length,
+                        itemCount: _posts.length + (_isLoadingMore || !_hasMore ? 1 : 0),
                         separatorBuilder: (_, index) => const SizedBox(height: 12),
                         itemBuilder: (context, index) {
+                          if (index == _posts.length) {
+                            if (_isLoadingMore) {
+                              return const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 14),
+                                child: Center(
+                                  child: SizedBox(
+                                    width: 22,
+                                    height: 22,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  ),
+                                ),
+                              );
+                            }
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 14),
+                              child: Center(
+                                child: Text(
+                                  "You're all caught up!",
+                                  style: TextStyle(fontSize: 12, color: AppColors.zinc500),
+                                ),
+                              ),
+                            );
+                          }
                           final post = _posts[index];
                           return _buildPostCard(post);
                         },

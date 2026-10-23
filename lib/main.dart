@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'core/state/theme_state.dart';
 import 'core/theme/app_theme.dart';
 import 'screens/splash_screen.dart';
+import 'services/push_notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await ThemeState.instance.init();
+  // Initialize push notification listener & token sync
+  PushNotificationService.initialize();
   runApp(const CampusStitchApp());
 }
 

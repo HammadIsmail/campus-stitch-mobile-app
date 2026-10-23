@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "551202613453",
+    "project_id": "campus-stitch",
+    "storage_bucket": "campus-stitch.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:551202613453:android:3e7c6de2c5d4c40c0c2184",
+        "android_client_info": {
+          "package_name": "com.campusstitch.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDbXBQpfeAf2lm1UP_A0ApWPQmuuARj86w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

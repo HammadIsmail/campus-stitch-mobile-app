@@ -21,4 +21,7 @@ class ApiConstants {
   // Domain Feature Endpoints
   static String get communityPosts => '$baseUrl/api/community/posts';
   static String get communityVote => '$baseUrl/api/community/posts/vote';
+
+  // Push Notifications
+  static String get pushToken => '$baseUrl/api/notifications/token';
 }
