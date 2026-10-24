@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/state/auth_state.dart';
 import '../../core/state/theme_state.dart';
 import '../../core/theme/app_theme.dart';
@@ -389,12 +390,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                               title: const Text('Account & Data Deletion', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.error)),
                               subtitle: const Text('Request permanent removal of student data', style: TextStyle(fontSize: 11)),
                               trailing: const Icon(Icons.chevron_right, size: 18),
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (_) => const PrivacyScreen()),
-                                );
-                              },
+                              onTap: () => _showAccountDeletionSheet(context),
                             ),
                           ],
                         ),
@@ -604,5 +600,106 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         );
       }
     }
+  }
+
+  void _showAccountDeletionSheet(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: isDark ? const Color(0xFF121215) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetCtx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.zinc800 : AppColors.zinc300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.error.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.delete_forever, color: AppColors.error, size: 24),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Account & Data Deletion',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+                        ),
+                        Text(
+                          'Google Play Data Safety Compliant',
+                          style: TextStyle(fontSize: 11, color: AppColors.zinc500),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Under Google Play Store policies and privacy laws, you can permanently delete your CampuStitch student profile and all associated data (carpools, listings, student ID badges, and messages).',
+                style: TextStyle(fontSize: 12, height: 1.5, color: AppColors.zinc500),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.error,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size.fromHeight(48),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+                icon: const Icon(Icons.open_in_browser, size: 18),
+                label: const Text('Open Web Deletion Request Portal', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                onPressed: () async {
+                  Navigator.pop(sheetCtx);
+                  final uri = Uri.parse('https://campus-stitch.vercel.app/delete-account');
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                },
+              ),
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(44),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+                icon: const Icon(Icons.shield_outlined, size: 18),
+                label: const Text('Review Data Retention Policy', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
+                onPressed: () {
+                  Navigator.pop(sheetCtx);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const PrivacyScreen()),
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
