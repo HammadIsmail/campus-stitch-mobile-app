@@ -5,6 +5,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../core/api/api_client.dart';
 import '../core/api/api_constants.dart';
+import '../main.dart';
+import '../models/app_version_model.dart';
+import '../screens/update/update_dialog.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -59,11 +62,13 @@ class PushNotificationService {
         // 7. Listen for foreground notifications
         FirebaseMessaging.onMessage.listen((RemoteMessage message) {
           _showForegroundNotification(message);
+          _handleAppUpdatePayload(message);
         });
 
         // 8. Handle user tapping notification
         FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
           debugPrint('User tapped notification: ${message.data}');
+          _handleAppUpdatePayload(message);
         });
 
         _isInitialized = true;
@@ -170,6 +175,35 @@ class PushNotificationService {
       );
     } catch (e) {
       debugPrint('Error syncing push token with backend: $e');
+    }
+  }
+
+  static void _handleAppUpdatePayload(RemoteMessage message) {
+    try {
+      if (message.data['type'] == 'app_update') {
+        final context = navigatorKey.currentContext;
+        if (context != null) {
+          final versionInfo = AppVersionModel(
+            latestVersion: message.data['version'] ?? '1.1.0',
+            buildNumber: int.tryParse(message.data['buildNumber'] ?? '2') ?? 2,
+            minSupportedVersion: message.data['minVersion'] ?? '1.0.0',
+            minSupportedBuild: 1,
+            forceUpdate: message.data['forceUpdate'] == 'true',
+            title: message.notification?.title ?? 'New Update Available! 🚀',
+            releaseNotes: message.notification?.body ?? 'A new release is available with new features and optimizations.',
+            apkDownloadUrl: message.data['downloadUrl'] ?? '',
+            fileSize: '50.2 MB',
+          );
+
+          UpdateDialog.show(
+            context,
+            versionInfo: versionInfo,
+            isForce: versionInfo.forceUpdate,
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error handling app update push payload: $e');
     }
   }
 }

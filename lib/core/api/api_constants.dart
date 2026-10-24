@@ -24,4 +24,7 @@ class ApiConstants {
 
   // Push Notifications
   static String get pushToken => '$baseUrl/api/notifications/token';
+
+  // In-App Self-Update
+  static String get appVersion => '$baseUrl/api/app/version';
 }

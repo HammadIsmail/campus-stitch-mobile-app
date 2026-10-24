@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_theme.dart';
 
 class PrivacyScreen extends StatelessWidget {
   const PrivacyScreen({super.key});
+
+  static const String _deleteUrl = 'https://campus-stitch.vercel.app/delete-account';
 
   void _showDeleteAccountDialog(BuildContext context) {
     showDialog(
@@ -10,13 +13,13 @@ class PrivacyScreen extends StatelessWidget {
       builder: (ctx) => AlertDialog(
         title: const Text('Delete Account & Data', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
         content: const Text(
-          'Under Google Play Store policies and privacy laws, you can permanently delete your CampuStitch account, student verification records, photos, and listing data.\n\nTo complete deletion, you can submit a request on our web portal at campus-stitch.com/delete-account or confirm with support.',
+          'Under Google Play Store policies and privacy laws, you can permanently delete your CampuStitch account, student verification records, photos, and listing data.\n\nTap below to open our official account deletion portal and submit your deletion request.',
           style: TextStyle(fontSize: 12, height: 1.5),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Close'),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -24,15 +27,12 @@ class PrivacyScreen extends StatelessWidget {
               foregroundColor: Colors.white,
               minimumSize: const Size(100, 36),
             ),
-            onPressed: () {
+            onPressed: () async {
               Navigator.of(ctx).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Please visit campus-stitch.com/delete-account to finalize request.'),
-                ),
-              );
+              final uri = Uri.parse(_deleteUrl);
+              await launchUrl(uri, mode: LaunchMode.externalApplication);
             },
-            child: const Text('Web Deletion Portal', style: TextStyle(fontSize: 12)),
+            child: const Text('Open Deletion Portal', style: TextStyle(fontSize: 12)),
           ),
         ],
       ),
@@ -142,7 +142,7 @@ class PrivacyScreen extends StatelessWidget {
               number: '6',
               title: 'Account & Data Deletion (Google Play Mandate)',
               content:
-                  'You have the unconditional right to delete your account and all associated personal data permanently:\n• Within App: Profile ➔ Account Settings ➔ Delete Account.\n• Web URL: campus-stitch.com/delete-account.\nUpon request, your credentials, student ID photos, selfie records, listings, and messages are permanently purged from active databases within 30 days.',
+                  'You have the unconditional right to delete your account and all associated personal data permanently:\n• Within App: Profile ➔ Account Settings ➔ Delete Account.\n• Web URL: https://campus-stitch.vercel.app/delete-account.\nUpon request, your credentials, student ID photos, selfie records, listings, and messages are permanently purged from active databases within 30 days.',
             ),
 
             _buildSection(

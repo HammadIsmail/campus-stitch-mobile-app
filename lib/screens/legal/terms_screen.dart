@@ -124,7 +124,7 @@ class TermsScreen extends StatelessWidget {
               number: '8',
               title: 'Account Termination & Deletion',
               content:
-                  'You may terminate your account at any time via Profile ➔ Delete Account or via our web deletion portal at campus-stitch.com/delete-account. Violations of university policy may lead to administrative suspension.',
+                  'You may terminate your account at any time via Profile ➔ Delete Account or via our web deletion portal at https://campus-stitch.vercel.app/delete-account. Violations of university policy may lead to administrative suspension.',
             ),
 
             _buildSection(

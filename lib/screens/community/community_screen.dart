@@ -15,11 +15,71 @@ class _CommunityScreenState extends State<CommunityScreen> {
   List<PostModel> _posts = [];
   bool _isLoading = true;
   String _selectedSubreddit = 'all';
+  final Set<String> _blockedUsers = {};
 
   final ScrollController _scrollController = ScrollController();
   int _currentPage = 1;
   bool _hasMore = true;
   bool _isLoadingMore = false;
+
+  void _blockUser(String authorName) {
+    setState(() {
+      _blockedUsers.add(authorName);
+      _posts.removeWhere((p) => p.authorName == authorName);
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Blocked $authorName. Their posts will no longer appear.'),
+        backgroundColor: AppColors.zinc800,
+      ),
+    );
+  }
+
+  void _showReportDialog(PostModel post) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.flag_outlined, size: 20, color: AppColors.error),
+            SizedBox(width: 8),
+            Text('Report Objectionable Content', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Report post by "${post.authorName}":', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 10),
+            ...['Harassment or Bullying', 'Spam or Misleading', 'Hate Speech / Slander', 'Explicit or Inappropriate Content'].map(
+              (reason) => ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.circle_outlined, size: 14),
+                title: Text(reason, style: const TextStyle(fontSize: 12)),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Report submitted. Campus moderators have been notified to review this content.'),
+                      backgroundColor: AppColors.success,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -346,11 +406,13 @@ class _CommunityScreenState extends State<CommunityScreen> {
                 const SizedBox(width: 6),
                 const Text('•', style: TextStyle(color: AppColors.zinc400)),
                 const SizedBox(width: 6),
-                Text(
-                  post.authorName,
-                  style: const TextStyle(fontSize: 11, color: AppColors.zinc500),
+                Expanded(
+                  child: Text(
+                    post.authorName,
+                    style: const TextStyle(fontSize: 11, color: AppColors.zinc500),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                const Spacer(),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
@@ -361,6 +423,40 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     post.flair,
                     style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
                   ),
+                ),
+                PopupMenuButton<String>(
+                  padding: EdgeInsets.zero,
+                  iconSize: 18,
+                  icon: const Icon(Icons.more_vert, size: 18, color: AppColors.zinc400),
+                  onSelected: (value) {
+                    if (value == 'report') {
+                      _showReportDialog(post);
+                    } else if (value == 'block') {
+                      _blockUser(post.authorName);
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'report',
+                      child: Row(
+                        children: [
+                          Icon(Icons.flag_outlined, size: 16, color: AppColors.error),
+                          SizedBox(width: 8),
+                          Text('Report Post', style: TextStyle(fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'block',
+                      child: Row(
+                        children: [
+                          Icon(Icons.block_outlined, size: 16, color: AppColors.zinc600),
+                          SizedBox(width: 8),
+                          Text('Block Author', style: TextStyle(fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

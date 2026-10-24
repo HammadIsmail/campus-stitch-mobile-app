@@ -4,6 +4,8 @@ import 'core/theme/app_theme.dart';
 import 'screens/splash_screen.dart';
 import 'services/push_notification_service.dart';
 
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await ThemeState.instance.init();
@@ -21,6 +23,7 @@ class CampusStitchApp extends StatelessWidget {
       listenable: ThemeState.instance,
       builder: (context, _) {
         return MaterialApp(
+          navigatorKey: navigatorKey,
           title: 'CampuStitch',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../core/state/auth_state.dart';
 import '../core/theme/app_theme.dart';
+import '../services/app_update_service.dart';
 import 'auth/sign_in_screen.dart';
 import 'main_navigation_screen.dart';
+import 'update/update_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -15,13 +17,54 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _checkAuth();
+    _initializeApp();
   }
 
-  Future<void> _checkAuth() async {
-    await AuthState.instance.init();
+  Future<void> _initializeApp() async {
+    // 1. Initialize auth session and check for in-app self updates concurrently
+    final results = await Future.wait([
+      AuthState.instance.init(),
+      AppUpdateService.checkForUpdate(),
+    ]);
+
     if (!mounted) return;
 
+    final updateResult = results[1] as UpdateCheckResult;
+
+    // 2. If a new update is published by admin:
+    if (updateResult.hasUpdate && updateResult.versionInfo != null) {
+      if (updateResult.isForceUpdate) {
+        // Enforce mandatory blocking update screen
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => UpdateScreen(
+              versionInfo: updateResult.versionInfo!,
+              isForce: true,
+            ),
+          ),
+        );
+        return;
+      } else {
+        // Optional update: show update screen with "Maybe Later" callback
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => UpdateScreen(
+              versionInfo: updateResult.versionInfo!,
+              isForce: false,
+              onDismiss: () => _navigateToNextScreen(),
+            ),
+          ),
+        );
+        return;
+      }
+    }
+
+    // 3. No update needed -> Proceed to user dashboard or login
+    _navigateToNextScreen();
+  }
+
+  void _navigateToNextScreen() {
+    if (!mounted) return;
     if (AuthState.instance.isAuthenticated) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
