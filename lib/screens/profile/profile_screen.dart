@@ -188,6 +188,46 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                     ),
                     const SizedBox(height: 16),
 
+                    // Account Deletion & Data Purge Card
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Row(
+                              children: [
+                                Icon(Icons.delete_outline, size: 18, color: AppColors.error),
+                                SizedBox(width: 8),
+                                Text(
+                                  'ACCOUNT DELETION & DATA PURGE',
+                                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.error, letterSpacing: 0.8),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            const Text(
+                              'Request permanent deletion of your student account and personal academic data in compliance with Google Play Store policies.',
+                              style: TextStyle(fontSize: 11, color: AppColors.zinc500, height: 1.4),
+                            ),
+                            const SizedBox(height: 12),
+                            ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.error,
+                                foregroundColor: Colors.white,
+                                minimumSize: const Size.fromHeight(42),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                              onPressed: () => _showAccountDeletionSheet(context),
+                              icon: const Icon(Icons.delete_forever, size: 16),
+                              label: const Text('Delete Student Account', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
                     if (isCampusAdmin) ...[
                       OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
@@ -602,6 +642,85 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     }
   }
 
+  Future<void> _executeAccountDeletion(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: AppColors.error),
+            SizedBox(width: 8),
+            Text('Confirm Deletion', style: TextStyle(fontWeight: FontWeight.w900)),
+          ],
+        ),
+        content: const Text(
+          'Are you absolutely sure you want to permanently delete your CampuStitch student account? All student credentials, verification badges, listings, and messages will be permanently erased.',
+          style: TextStyle(fontSize: 13, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            onPressed: () => Navigator.pop(dialogCtx, true),
+            child: const Text('Permanently Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(
+          child: Card(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(strokeWidth: 3),
+                  SizedBox(width: 16),
+                  Text('Deleting account...', style: TextStyle(fontWeight: FontWeight.w700)),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final success = await AuthState.instance.deleteAccount();
+
+      if (context.mounted) {
+        Navigator.of(context, rootNavigator: true).pop(); // dismiss loader
+
+        if (success) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const SignInScreen()),
+            (route) => false,
+          );
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Your student account and personal data have been permanently deleted.'),
+              backgroundColor: AppColors.error,
+              duration: Duration(seconds: 4),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(AuthState.instance.errorMessage ?? 'Could not delete account. Please try again.'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      }
+    }
+  }
+
   void _showAccountDeletionSheet(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -671,12 +790,11 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   minimumSize: const Size.fromHeight(48),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
-                icon: const Icon(Icons.open_in_browser, size: 18),
-                label: const Text('Open Web Deletion Request Portal', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                onPressed: () async {
+                icon: const Icon(Icons.delete_forever, size: 18),
+                label: const Text('Delete Account Now (In-App)', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+                onPressed: () {
                   Navigator.pop(sheetCtx);
-                  final uri = Uri.parse('https://campus-stitch.vercel.app/delete-account');
-                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  _executeAccountDeletion(context);
                 },
               ),
               const SizedBox(height: 10),
@@ -685,8 +803,22 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   minimumSize: const Size.fromHeight(44),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
-                icon: const Icon(Icons.shield_outlined, size: 18),
-                label: const Text('Review Data Retention Policy', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
+                icon: const Icon(Icons.open_in_browser, size: 18),
+                label: const Text('Open Web Deletion Request Portal', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+                onPressed: () async {
+                  Navigator.pop(sheetCtx);
+                  final uri = Uri.parse('https://campus-stitch.vercel.app/delete-account');
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                },
+              ),
+              const SizedBox(height: 8),
+              TextButton.icon(
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.zinc500,
+                  minimumSize: const Size.fromHeight(38),
+                ),
+                icon: const Icon(Icons.shield_outlined, size: 16),
+                label: const Text('Review Data Retention Policy', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 11)),
                 onPressed: () {
                   Navigator.pop(sheetCtx);
                   Navigator.push(
@@ -695,7 +827,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   );
                 },
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
             ],
           ),
         ),

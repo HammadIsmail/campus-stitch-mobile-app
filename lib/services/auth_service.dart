@@ -116,4 +116,16 @@ class AuthService {
   static Future<void> signOut() async {
     await SessionStore.clearSession();
   }
+
+  static Future<ApiResponse> deleteAccount({String? userId, String? email}) async {
+    final response = await ApiClient.delete(
+      ApiConstants.profile,
+      body: {
+        if (userId != null && userId.isNotEmpty) 'userId': userId,
+        if (email != null && email.isNotEmpty) 'email': email,
+      },
+    );
+    await SessionStore.clearSession();
+    return response;
+  }
 }

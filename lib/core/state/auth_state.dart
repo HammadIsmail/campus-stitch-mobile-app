@@ -118,4 +118,26 @@ class AuthState extends ChangeNotifier {
     await AuthService.signOut();
     notifyListeners();
   }
+
+  Future<bool> deleteAccount() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final res = await AuthService.deleteAccount(
+        userId: _user?.userId,
+        email: _user?.email,
+      );
+      _user = null;
+      _isLoading = false;
+      notifyListeners();
+      return res.success;
+    } catch (e) {
+      _errorMessage = ApiClient.humanizeError(e);
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
 }
