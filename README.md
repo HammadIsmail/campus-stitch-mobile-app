@@ -1,10 +1,7 @@
 # CampuStitch - Mobile Application (Flutter)
 
-> **Official Mobile Repository**: [https://github.com/HammadIsmail/campus-stitch-mobile-app](https://github.com/HammadIsmail/campus-stitch-mobile-app)  
-> **Next.js Web Repository**: [https://github.com/HammadIsmail/campus-stitch](https://github.com/HammadIsmail/campus-stitch)  
-> **Backend Production API**: [https://campus-stitch.vercel.app](https://campus-stitch.vercel.app)  
-> **Master Documentation**: [Master Documentation Hub](../docs/README.md)
 
+> **Next.js Web Repository**: [https://github.com/HammadIsmail/campus-stitch](https://github.com/HammadIsmail/campus-stitch)  
 **CampuStitch Mobile** is a cross-platform Flutter application (Android & iOS) designed for verified university students across Pakistan. It provides a native mobile experience for daily rickshaw/carpool splits, peer bike rentals, student-to-student marketplace, hostel living, Reddit-style campus community feed, and real-time push notifications.
 
 ---
