@@ -128,18 +128,26 @@ class MarketService {
     }
   }
 
-  /// Updates listing status (e.g. 'sold', 'reserved') or price
+  /// Updates listing details or status
   static Future<bool> updateListing({
     required String id,
     String? status,
     int? price,
     String? title,
+    String? category,
+    String? condition,
+    String? description,
+    String? location,
   }) async {
     try {
       final body = <String, dynamic>{'id': id};
       if (status != null) body['status'] = status;
       if (price != null) body['price'] = price;
       if (title != null) body['title'] = title;
+      if (category != null) body['category'] = category;
+      if (condition != null) body['condition'] = condition;
+      if (description != null) body['description'] = description;
+      if (location != null) body['location'] = location;
       final res = await ApiClient.patch(
         ApiConstants.marketListings,
         body: body,

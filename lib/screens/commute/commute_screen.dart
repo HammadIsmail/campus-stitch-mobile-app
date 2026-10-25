@@ -141,6 +141,163 @@ class _CommuteScreenState extends State<CommuteScreen> with SingleTickerProvider
     );
   }
 
+  void _showEditRideDialog(RideModel ride) {
+    final fromCtrl = TextEditingController(text: ride.fromLocation);
+    final toCtrl = TextEditingController(text: ride.toLocation);
+    final timeCtrl = TextEditingController(text: ride.departureTime);
+    final priceCtrl = TextEditingController(text: ride.pricePerSeat.toString());
+    final seatsCtrl = TextEditingController(text: ride.availableSeats.toString());
+    String vehicle = ride.vehicleType;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Edit Ride', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: fromCtrl,
+                  decoration: const InputDecoration(labelText: 'From Location', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: toCtrl,
+                  decoration: const InputDecoration(labelText: 'To Location', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: timeCtrl,
+                        decoration: const InputDecoration(labelText: 'Time (e.g. 08:30 AM)', border: OutlineInputBorder()),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        controller: priceCtrl,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(labelText: 'Price / Seat (Rs)', border: OutlineInputBorder()),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: seatsCtrl,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(labelText: 'Seats Available', border: OutlineInputBorder()),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        initialValue: ['rickshaw', 'bike', 'car'].contains(vehicle.toLowerCase()) ? vehicle.toLowerCase() : 'rickshaw',
+                        decoration: const InputDecoration(labelText: 'Vehicle', border: OutlineInputBorder()),
+                        items: const [
+                          DropdownMenuItem(value: 'rickshaw', child: Text('Rickshaw')),
+                          DropdownMenuItem(value: 'bike', child: Text('Bike')),
+                          DropdownMenuItem(value: 'car', child: Text('Car')),
+                        ],
+                        onChanged: (val) {
+                          if (val != null) setDialogState(() => vehicle = val);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final from = fromCtrl.text.trim();
+                final to = toCtrl.text.trim();
+                final time = timeCtrl.text.trim();
+                final price = int.tryParse(priceCtrl.text.trim()) ?? ride.pricePerSeat;
+                final seats = int.tryParse(seatsCtrl.text.trim()) ?? ride.availableSeats;
+                if (from.isEmpty || to.isEmpty) return;
+
+                final scaffold = ScaffoldMessenger.of(context);
+                Navigator.pop(ctx);
+                final success = await CommuteService.updateRide(
+                  id: ride.id,
+                  fromLocation: from,
+                  toLocation: to,
+                  departureTime: time,
+                  pricePerSeat: price,
+                  availableSeats: seats,
+                  vehicleType: vehicle,
+                );
+
+                if (!mounted) return;
+                if (success) {
+                  scaffold.showSnackBar(
+                    const SnackBar(content: Text('Ride updated successfully!')),
+                  );
+                  _loadAllData();
+                } else {
+                  scaffold.showSnackBar(
+                    const SnackBar(content: Text('Failed to update ride.')),
+                  );
+                }
+              },
+              child: const Text('Save Changes'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _confirmDeleteRide(RideModel ride) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Ride', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        content: const Text('Are you sure you want to cancel and delete this ride?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Keep Ride'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            onPressed: () async {
+              final scaffold = ScaffoldMessenger.of(context);
+              Navigator.pop(ctx);
+              final success = await CommuteService.deleteRide(ride.id);
+              if (!mounted) return;
+              if (success) {
+                scaffold.showSnackBar(
+                  const SnackBar(content: Text('Ride deleted successfully!')),
+                );
+                _loadAllData();
+              } else {
+                scaffold.showSnackBar(
+                  const SnackBar(content: Text('Failed to delete ride.')),
+                );
+              }
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _offerRide() {
     final user = AuthState.instance.user;
     final campusId = AuthState.instance.activeCampusId;
@@ -153,15 +310,16 @@ class _CommuteScreenState extends State<CommuteScreen> with SingleTickerProvider
     final timeCtrl = TextEditingController(text: '08:00 AM');
     final dateCtrl = TextEditingController(text: 'Today');
     final seatsCtrl = TextEditingController(text: '3');
+    final totalFareCtrl = TextEditingController(text: '200');
     final priceCtrl = TextEditingController(text: '50');
     final pickupCtrl = TextEditingController(text: 'Main Chowk Shell Pump');
     final notesCtrl = TextEditingController();
     bool isPosting = false;
 
     void updatePrice(StateSetter setModalState) {
-      final base = vehicle == 'rickshaw' ? 200 : vehicle == 'bike' ? 150 : 350;
+      final base = int.tryParse(totalFareCtrl.text.trim()) ?? (vehicle == 'rickshaw' ? 200 : vehicle == 'bike' ? 150 : 350);
       final s = int.tryParse(seatsCtrl.text) ?? 3;
-      final perSeat = (base / (s > 0 ? s : 1)).round();
+      final perSeat = (base / (s > 0 ? s + 1 : 1)).round();
       priceCtrl.text = perSeat.toString();
     }
 
@@ -210,6 +368,8 @@ class _CommuteScreenState extends State<CommuteScreen> with SingleTickerProvider
                         onSelected: (val) {
                           setModalState(() {
                             vehicle = 'rickshaw';
+                            totalFareCtrl.text = '200';
+                            seatsCtrl.text = '3';
                             updatePrice(setModalState);
                           });
                         },
@@ -224,6 +384,7 @@ class _CommuteScreenState extends State<CommuteScreen> with SingleTickerProvider
                         onSelected: (val) {
                           setModalState(() {
                             vehicle = 'bike';
+                            totalFareCtrl.text = '150';
                             seatsCtrl.text = '1';
                             updatePrice(setModalState);
                           });
@@ -239,6 +400,8 @@ class _CommuteScreenState extends State<CommuteScreen> with SingleTickerProvider
                         onSelected: (val) {
                           setModalState(() {
                             vehicle = 'car';
+                            totalFareCtrl.text = '350';
+                            seatsCtrl.text = '3';
                             updatePrice(setModalState);
                           });
                         },
@@ -298,9 +461,22 @@ class _CommuteScreenState extends State<CommuteScreen> with SingleTickerProvider
                 ),
                 const SizedBox(height: 10),
 
-                // Seats & Price Per Seat
+                // Total Fare & Available Seats
                 Row(
                   children: [
+                    Expanded(
+                      child: TextField(
+                        controller: totalFareCtrl,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'Total ${vehicle == 'rickshaw' ? 'Rickshaw' : vehicle == 'bike' ? 'Bike' : 'Car'} Fare (Rs.)',
+                          hintText: 'e.g. 200',
+                          prefixIcon: const Icon(Icons.request_quote_outlined, size: 18),
+                        ),
+                        onChanged: (_) => updatePrice(setModalState),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: TextField(
                         controller: seatsCtrl,
@@ -312,18 +488,18 @@ class _CommuteScreenState extends State<CommuteScreen> with SingleTickerProvider
                         onChanged: (_) => updatePrice(setModalState),
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextField(
-                        controller: priceCtrl,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Fare / Seat (Rs.)',
-                          prefixIcon: Icon(Icons.payments_outlined, size: 18),
-                        ),
-                      ),
-                    ),
                   ],
+                ),
+                const SizedBox(height: 10),
+
+                // Price Per Seat
+                TextField(
+                  controller: priceCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Fare / Seat for Passengers (Rs.)',
+                    prefixIcon: Icon(Icons.payments_outlined, size: 18),
+                  ),
                 ),
                 const SizedBox(height: 10),
 
@@ -361,6 +537,7 @@ class _CommuteScreenState extends State<CommuteScreen> with SingleTickerProvider
                           final timeText = timeCtrl.text.trim();
                           final seatsNum = int.tryParse(seatsCtrl.text.trim()) ?? 3;
                           final priceNum = int.tryParse(priceCtrl.text.trim()) ?? 50;
+                          final totalFareNum = int.tryParse(totalFareCtrl.text.trim()) ?? (priceNum * (seatsNum + 1));
 
                           if (fromText.isEmpty || toText.isEmpty || timeText.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -371,8 +548,6 @@ class _CommuteScreenState extends State<CommuteScreen> with SingleTickerProvider
 
                           setModalState(() => isPosting = true);
 
-                          final baseCost = vehicle == 'rickshaw' ? 200 : vehicle == 'bike' ? 150 : 350;
-
                           final createdRide = await CommuteService.createRide(
                             campusId: campusId,
                             universityId: universityId,
@@ -382,7 +557,7 @@ class _CommuteScreenState extends State<CommuteScreen> with SingleTickerProvider
                             departureTime: timeText,
                             departureDate: dateCtrl.text.trim().isEmpty ? 'Today' : dateCtrl.text.trim(),
                             vehicleType: vehicle,
-                            totalCost: baseCost,
+                            totalCost: totalFareNum,
                             pricePerSeat: priceNum,
                             totalSeats: seatsNum + 1,
                             availableSeats: seatsNum,
@@ -503,18 +678,58 @@ class _CommuteScreenState extends State<CommuteScreen> with SingleTickerProvider
               Text('Notes: ${ride.notes}', style: const TextStyle(fontSize: 12, color: AppColors.zinc500)),
             ],
             const SizedBox(height: 16),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size.fromHeight(44),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              onPressed: ride.availableSeats > 0
-                  ? () {
-                      Navigator.pop(ctx);
-                      _bookRide(ride);
-                    }
-                  : null,
-              child: Text(ride.availableSeats > 0 ? 'Book a Seat (${ride.availableSeats} Left)' : 'Ride Fully Booked'),
+            Builder(
+              builder: (context) {
+                final user = AuthState.instance.user;
+                final currentUserName = (user != null && user.name.isNotEmpty)
+                    ? user.name.trim().toLowerCase()
+                    : '';
+                final isMine = currentUserName.isNotEmpty &&
+                    ride.organizerName.trim().toLowerCase() == currentUserName;
+
+                if (isMine) {
+                  return Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            _showEditRideDialog(ride);
+                          },
+                          icon: const Icon(Icons.edit_outlined, size: 16),
+                          label: const Text('Edit Ride'),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            _confirmDeleteRide(ride);
+                          },
+                          icon: const Icon(Icons.delete_outline, size: 16, color: Colors.white),
+                          label: const Text('Delete', style: TextStyle(color: Colors.white)),
+                        ),
+                      ),
+                    ],
+                  );
+                }
+
+                return ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(44),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: ride.availableSeats > 0
+                      ? () {
+                          Navigator.pop(ctx);
+                          _bookRide(ride);
+                        }
+                      : null,
+                  child: Text(ride.availableSeats > 0 ? 'Book a Seat (${ride.availableSeats} Left)' : 'Ride Fully Booked'),
+                );
+              },
             ),
           ],
         ),
@@ -867,14 +1082,45 @@ class _CommuteScreenState extends State<CommuteScreen> with SingleTickerProvider
                         ),
                       ),
                       const SizedBox(width: 8),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: const Size(70, 30),
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        onPressed: ride.availableSeats > 0 ? () => _bookRide(ride) : null,
-                        child: const Text('Book', style: TextStyle(fontSize: 11)),
+                      Builder(
+                        builder: (context) {
+                          final user = AuthState.instance.user;
+                          final currentUserName = (user != null && user.name.isNotEmpty)
+                              ? user.name.trim().toLowerCase()
+                              : '';
+                          final isMine = currentUserName.isNotEmpty &&
+                              ride.organizerName.trim().toLowerCase() == currentUserName;
+
+                          if (isMine) {
+                            return Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.edit_outlined, size: 16),
+                                  visualDensity: VisualDensity.compact,
+                                  tooltip: 'Edit Ride',
+                                  onPressed: () => _showEditRideDialog(ride),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete_outline, size: 16, color: AppColors.error),
+                                  visualDensity: VisualDensity.compact,
+                                  tooltip: 'Delete Ride',
+                                  onPressed: () => _confirmDeleteRide(ride),
+                                ),
+                              ],
+                            );
+                          }
+
+                          return ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              minimumSize: const Size(70, 30),
+                              padding: const EdgeInsets.symmetric(horizontal: 10),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            onPressed: ride.availableSeats > 0 ? () => _bookRide(ride) : null,
+                            child: const Text('Book', style: TextStyle(fontSize: 11)),
+                          );
+                        },
                       ),
                     ],
                   ),

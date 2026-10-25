@@ -57,6 +57,9 @@ class PostModel {
   }
 
   PostModel copyWith({
+    String? title,
+    String? content,
+    String? flair,
     int? upvotes,
     int? downvotes,
     int? score,
@@ -65,9 +68,9 @@ class PostModel {
     return PostModel(
       id: id,
       communityName: communityName,
-      title: title,
-      content: content,
-      flair: flair,
+      title: title ?? this.title,
+      content: content ?? this.content,
+      flair: flair ?? this.flair,
       authorName: authorName,
       authorStudentId: authorStudentId,
       campusId: campusId,

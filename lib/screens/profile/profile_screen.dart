@@ -7,6 +7,7 @@ import '../admin/campus_admin_screen.dart';
 import '../auth/sign_in_screen.dart';
 import '../legal/terms_screen.dart';
 import '../legal/privacy_screen.dart';
+import '../verification/verification_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -161,7 +162,34 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
+
+                    // Verify Student Identity Action Button
+                    if (user?.isVerified != true) ...[
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isDark ? AppColors.white : AppColors.black,
+                          foregroundColor: isDark ? AppColors.black : AppColors.white,
+                          minimumSize: const Size.fromHeight(46),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          elevation: 0,
+                        ),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const VerificationScreen()),
+                          );
+                        },
+                        icon: const Icon(Icons.verified_user_outlined, size: 18),
+                        label: const Text(
+                          'Verify Student Identity (Badge)',
+                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ] else ...[
+                      const SizedBox(height: 4),
+                    ],
 
                     // Tenant Details List
                     Card(
@@ -338,6 +366,51 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                     ),
                     const SizedBox(height: 16),
 
+                    // Verification Settings Card
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'IDENTITY & TRUST',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.zinc500,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              dense: true,
+                              leading: Icon(
+                                user?.isVerified == true ? Icons.verified : Icons.verified_user_outlined,
+                                size: 20,
+                                color: user?.isVerified == true ? AppColors.success : AppColors.warning,
+                              ),
+                              title: const Text('Student Identity Verification', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                              subtitle: Text(
+                                user?.isVerified == true
+                                    ? 'Official Verified Student Badge Active'
+                                    : 'Snap live selfie & student ID card to verify',
+                                style: const TextStyle(fontSize: 11),
+                              ),
+                              trailing: const Icon(Icons.chevron_right, size: 18),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => const VerificationScreen()),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
 
                     // Legal & Policies Card
                     Card(

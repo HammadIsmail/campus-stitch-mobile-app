@@ -197,18 +197,28 @@ class CommuteService {
     }
   }
 
-  /// Updates ride status (e.g. 'completed', 'cancelled') or available seats
+  /// Updates ride details or status
   static Future<bool> updateRide({
     required String id,
     String? status,
     int? availableSeats,
     String? notes,
+    int? pricePerSeat,
+    String? departureTime,
+    String? fromLocation,
+    String? toLocation,
+    String? vehicleType,
   }) async {
     try {
       final body = <String, dynamic>{'id': id};
       if (status != null) body['status'] = status;
       if (availableSeats != null) body['availableSeats'] = availableSeats;
       if (notes != null) body['notes'] = notes;
+      if (pricePerSeat != null) body['pricePerSeat'] = pricePerSeat;
+      if (departureTime != null) body['departureTime'] = departureTime;
+      if (fromLocation != null) body['fromLocation'] = fromLocation;
+      if (toLocation != null) body['toLocation'] = toLocation;
+      if (vehicleType != null) body['vehicleType'] = vehicleType;
       final res = await ApiClient.patch(
         ApiConstants.commuteRides,
         body: body,

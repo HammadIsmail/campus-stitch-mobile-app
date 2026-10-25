@@ -81,6 +81,157 @@ class _CommunityScreenState extends State<CommunityScreen> {
     );
   }
 
+  void _showEditPostDialog(PostModel post) {
+    final titleController = TextEditingController(text: post.title);
+    final contentController = TextEditingController(text: post.content);
+    String selectedFlair = post.flair;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Edit Post', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: titleController,
+                  decoration: const InputDecoration(
+                    labelText: 'Title',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: contentController,
+                  maxLines: 4,
+                  decoration: const InputDecoration(
+                    labelText: 'Content',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: ['Discussion', 'Question', 'Resource', 'Notice'].contains(selectedFlair)
+                      ? selectedFlair
+                      : 'Discussion',
+                  decoration: const InputDecoration(
+                    labelText: 'Flair',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: ['Discussion', 'Question', 'Resource', 'Notice']
+                      .map((f) => DropdownMenuItem(value: f, child: Text(f)))
+                      .toList(),
+                  onChanged: (val) {
+                    if (val != null) {
+                      setDialogState(() => selectedFlair = val);
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final newTitle = titleController.text.trim();
+                final newContent = contentController.text.trim();
+                if (newTitle.isEmpty) return;
+
+                final scaffold = ScaffoldMessenger.of(context);
+                Navigator.of(ctx).pop();
+                final success = await CommunityService.updatePost(
+                  postId: post.id,
+                  title: newTitle,
+                  content: newContent,
+                  flair: selectedFlair,
+                );
+
+                if (!mounted) return;
+                if (success) {
+                  setState(() {
+                    final idx = _posts.indexWhere((p) => p.id == post.id);
+                    if (idx != -1) {
+                      _posts[idx] = _posts[idx].copyWith(
+                        title: newTitle,
+                        content: newContent,
+                        flair: selectedFlair,
+                      );
+                    }
+                  });
+                  scaffold.showSnackBar(
+                    const SnackBar(
+                      content: Text('Post updated successfully'),
+                      backgroundColor: AppColors.success,
+                    ),
+                  );
+                } else {
+                  scaffold.showSnackBar(
+                    const SnackBar(
+                      content: Text('Failed to update post'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _confirmDeletePost(PostModel post) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Post', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        content: const Text('Are you sure you want to delete this post? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            onPressed: () async {
+              final scaffold = ScaffoldMessenger.of(context);
+              Navigator.of(ctx).pop();
+              final success = await CommunityService.deletePost(post.id);
+              if (!mounted) return;
+              if (success) {
+                setState(() {
+                  _posts.removeWhere((p) => p.id == post.id);
+                });
+                scaffold.showSnackBar(
+                  const SnackBar(
+                    content: Text('Post deleted successfully'),
+                    backgroundColor: AppColors.zinc800,
+                  ),
+                );
+              } else {
+                scaffold.showSnackBar(
+                  const SnackBar(
+                    content: Text('Failed to delete post'),
+                    backgroundColor: AppColors.error,
+                  ),
+                );
+              }
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -424,39 +575,77 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
                   ),
                 ),
-                PopupMenuButton<String>(
-                  padding: EdgeInsets.zero,
-                  iconSize: 18,
-                  icon: const Icon(Icons.more_vert, size: 18, color: AppColors.zinc400),
-                  onSelected: (value) {
-                    if (value == 'report') {
-                      _showReportDialog(post);
-                    } else if (value == 'block') {
-                      _blockUser(post.authorName);
-                    }
+                Builder(
+                  builder: (context) {
+                    final user = AuthState.instance.user;
+                    final currentUserName = (user != null && user.name.isNotEmpty)
+                        ? user.name.trim().toLowerCase()
+                        : '';
+                    final isAuthor = currentUserName.isNotEmpty &&
+                        post.authorName.trim().toLowerCase() == currentUserName;
+
+                    return PopupMenuButton<String>(
+                      padding: EdgeInsets.zero,
+                      iconSize: 18,
+                      icon: const Icon(Icons.more_vert, size: 18, color: AppColors.zinc400),
+                      onSelected: (value) {
+                        if (value == 'edit') {
+                          _showEditPostDialog(post);
+                        } else if (value == 'delete') {
+                          _confirmDeletePost(post);
+                        } else if (value == 'report') {
+                          _showReportDialog(post);
+                        } else if (value == 'block') {
+                          _blockUser(post.authorName);
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        if (isAuthor) ...[
+                          const PopupMenuItem(
+                            value: 'edit',
+                            child: Row(
+                              children: [
+                                Icon(Icons.edit_outlined, size: 16, color: AppColors.zinc700),
+                                SizedBox(width: 8),
+                                Text('Edit Post', style: TextStyle(fontSize: 12)),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                Icon(Icons.delete_outline, size: 16, color: AppColors.error),
+                                SizedBox(width: 8),
+                                Text('Delete Post', style: TextStyle(fontSize: 12, color: AppColors.error)),
+                              ],
+                            ),
+                          ),
+                        ] else ...[
+                          const PopupMenuItem(
+                            value: 'report',
+                            child: Row(
+                              children: [
+                                Icon(Icons.flag_outlined, size: 16, color: AppColors.error),
+                                SizedBox(width: 8),
+                                Text('Report Post', style: TextStyle(fontSize: 12)),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'block',
+                            child: Row(
+                              children: [
+                                Icon(Icons.block_outlined, size: 16, color: AppColors.zinc600),
+                                SizedBox(width: 8),
+                                Text('Block Author', style: TextStyle(fontSize: 12)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    );
                   },
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(
-                      value: 'report',
-                      child: Row(
-                        children: [
-                          Icon(Icons.flag_outlined, size: 16, color: AppColors.error),
-                          SizedBox(width: 8),
-                          Text('Report Post', style: TextStyle(fontSize: 12)),
-                        ],
-                      ),
-                    ),
-                    const PopupMenuItem(
-                      value: 'block',
-                      child: Row(
-                        children: [
-                          Icon(Icons.block_outlined, size: 16, color: AppColors.zinc600),
-                          SizedBox(width: 8),
-                          Text('Block Author', style: TextStyle(fontSize: 12)),
-                        ],
-                      ),
-                    ),
-                  ],
                 ),
               ],
             ),
@@ -476,7 +665,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
             ],
             const SizedBox(height: 12),
 
-            // Voting and Comments
+            // Voting and Comments and Share
             Row(
               children: [
                 Container(
@@ -534,6 +723,31 @@ class _CommunityScreenState extends State<CommunityScreen> {
                       style: const TextStyle(fontSize: 11, color: AppColors.zinc500),
                     ),
                   ],
+                ),
+                const SizedBox(width: 14),
+                InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Post link copied to clipboard!'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                    child: Row(
+                      children: [
+                        Icon(Icons.share_outlined, size: 15, color: AppColors.zinc500),
+                        SizedBox(width: 5),
+                        Text(
+                          'Share',
+                          style: TextStyle(fontSize: 11, color: AppColors.zinc500, fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),

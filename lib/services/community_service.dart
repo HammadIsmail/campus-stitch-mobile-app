@@ -82,6 +82,29 @@ class CommunityService {
     );
   }
 
+  static Future<bool> updatePost({
+    required String postId,
+    required String title,
+    required String content,
+    String? flair,
+  }) async {
+    try {
+      final body = <String, dynamic>{
+        'id': postId,
+        'title': title.trim(),
+        'content': content.trim(),
+      };
+      if (flair != null) body['flair'] = flair;
+      final res = await ApiClient.patch(
+        ApiConstants.communityPosts,
+        body: body,
+      );
+      return res.success;
+    } catch (_) {
+      return false;
+    }
+  }
+
   static Future<bool> deletePost(String postId) async {
     try {
       final res = await ApiClient.delete('${ApiConstants.communityPosts}?id=$postId');

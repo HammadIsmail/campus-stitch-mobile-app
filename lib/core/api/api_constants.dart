@@ -36,6 +36,9 @@ class ApiConstants {
   // Marketplace Endpoints
   static String get marketListings => '$baseUrl/api/market';
 
+  // Image & File Upload
+  static String get upload => '$baseUrl/api/upload';
+
   // In-App Self-Update
   static String get appVersion => '$baseUrl/api/app/version';
 }

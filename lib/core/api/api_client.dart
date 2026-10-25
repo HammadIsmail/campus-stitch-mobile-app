@@ -293,6 +293,38 @@ class ApiClient {
     }
   }
 
+  static Future<ApiResponse> uploadBytes(
+    String url, {
+    required List<int> bytes,
+    required String filename,
+    String fieldName = 'file',
+    Map<String, String>? fields,
+  }) async {
+    try {
+      final request = http.MultipartRequest('POST', Uri.parse(url));
+      final session = await SessionStore.loadSession();
+      if (session != null) {
+        final token = session['token'] as String?;
+        if (token != null && token.isNotEmpty) {
+          request.headers['Authorization'] = 'Bearer $token';
+        }
+      }
+      if (fields != null) {
+        request.fields.addAll(fields);
+      }
+      request.files.add(http.MultipartFile.fromBytes(fieldName, bytes, filename: filename));
+      final streamedResponse = await request.send().timeout(_timeout);
+      final response = await http.Response.fromStream(streamedResponse);
+      return _parseResponse(response);
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        message: humanizeError(e),
+        statusCode: 500,
+      );
+    }
+  }
+
   static ApiResponse _parseResponse(http.Response res) {
     try {
       final body = jsonDecode(res.body);
