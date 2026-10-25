@@ -150,7 +150,7 @@ class PrivacyScreen extends StatelessWidget {
               number: '7',
               title: 'Contact Our Data Protection Officer',
               content:
-                  'For privacy inquiries or compliance requests:\nEmail: privacy@campus-stitch.com / ranahammadismail@gmail.com\nLocation: Lahore, Pakistan.',
+                  'For privacy inquiries or compliance requests:\nEmail: hammadismail807@gmail.com\nLocation: Lahore, Pakistan.',
             ),
 
             const SizedBox(height: 12),

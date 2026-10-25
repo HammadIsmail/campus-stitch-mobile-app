@@ -33,9 +33,9 @@
 - **Roommate Vacancies:** Listings for shared rooms, attached washrooms, and hostel vacancies across university blocks.
 - **Student Services:** Door-to-door campus services (laundry pickup, electricians, past paper delivery).
 
-### 6. 🛡️ Verification & Multi-Tenant KYC (`CampusAdminScreen`)
-- **Student KYC:** Card upload review with side-by-side verification.
-- **Campus Admin Actions:** One-tap approve and reject buttons that immediately update student credentials.
+### 6. 🛡️ Student Identity Verification (`VerificationScreen`)
+- **Student KYC Submission:** Pure student-facing flow to upload live selfie and university student ID card.
+- **Web-Only Administration:** Note that CampuStitch mobile has NO admin or super-admin screens/APIs. All administrative operations (KYC document verification, campus administration, super admin management) are handled exclusively on the Web portal (`/admin` and `/admin/super`).
 
 ---
 

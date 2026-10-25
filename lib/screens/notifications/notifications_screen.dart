@@ -31,53 +31,7 @@ class NotificationsScreen extends StatefulWidget {
 class _NotificationsScreenState extends State<NotificationsScreen> {
   String _selectedFilter = 'All';
 
-  final List<NotificationItem> _notifications = [
-    NotificationItem(
-      id: '1',
-      type: 'ride',
-      title: 'Ride Seat Confirmed!',
-      message: 'Your seat in Ahmed Raza\'s Khurrialwala carpool split (8:00 AM) is confirmed.',
-      time: '10m ago',
-      deeplink: '/commute',
-      read: false,
-    ),
-    NotificationItem(
-      id: '2',
-      type: 'market',
-      title: 'Buyer Inquired on Phone Cooler',
-      message: 'Sara Khan sent an inquiry about your Semiconductor Phone Cooler listing.',
-      time: '1h ago',
-      deeplink: '/market',
-      read: false,
-    ),
-    NotificationItem(
-      id: '3',
-      type: 'verification',
-      title: 'Student Identity Verified',
-      message: 'Your Student ID Card has been officially reviewed and verified by Campus Administration.',
-      time: 'Yesterday',
-      deeplink: '/profile',
-      read: true,
-    ),
-    NotificationItem(
-      id: '4',
-      type: 'bike',
-      title: 'Cycle Rental Available',
-      message: 'The Honda CD 70 / cycle rental you watched is ready for pickup at Hostel Block A.',
-      time: '2d ago',
-      deeplink: '/commute',
-      read: true,
-    ),
-    NotificationItem(
-      id: '5',
-      type: 'community',
-      title: 'New Reply in r/cs-uet',
-      message: 'Bilal Cheema replied to your thread: "Tips for Operating Systems Lab 3".',
-      time: '3d ago',
-      deeplink: '/community',
-      read: true,
-    ),
-  ];
+  final List<NotificationItem> _notifications = [];
 
   int get _unreadCount => _notifications.where((n) => !n.read).length;
 

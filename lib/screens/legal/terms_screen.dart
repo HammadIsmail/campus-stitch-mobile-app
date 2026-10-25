@@ -140,7 +140,7 @@ class TermsScreen extends StatelessWidget {
               number: '10',
               title: 'Contact Information',
               content:
-                  'Inquiries regarding these terms may be directed to support@campus-stitch.com or ranahammadismail@gmail.com.',
+                  'Inquiries regarding these terms may be directed to hammadismail807@gmail.com.',
             ),
 
             const SizedBox(height: 20),

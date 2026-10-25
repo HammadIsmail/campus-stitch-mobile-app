@@ -56,55 +56,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
   @override
   void initState() {
     super.initState();
-    _conversations = [
-      ConversationItem(
-        id: '1',
-        contactName: 'Ahmed Raza',
-        contactVerified: true,
-        roleBadge: 'Carpool Host',
-        contextTitle: 'Khurrialwala Morning Ride (8:00 AM)',
-        contextSubtitle: 'Toyota Corolla • 3 seats left',
-        lastMessage: 'I\'ll be waiting at the campus main gate near fountain.',
-        lastTime: '5m ago',
-        unreadCount: 1,
-        messages: [
-          ChatMessage(id: 'm1', isMe: false, text: 'Assalam-o-Alaikum, are you still joining from campus?', time: '7:45 AM'),
-          ChatMessage(id: 'm2', isMe: true, text: 'Walaikum Assalam, yes I have confirmed seat 2.', time: '7:47 AM'),
-          ChatMessage(id: 'm3', isMe: false, text: 'I\'ll be waiting at the campus main gate near fountain.', time: '7:50 AM'),
-        ],
-      ),
-      ConversationItem(
-        id: '2',
-        contactName: 'Sara Khan',
-        contactVerified: true,
-        roleBadge: 'Textbook Buyer',
-        contextTitle: 'Operating System Concepts (Silberschatz)',
-        contextSubtitle: 'Marketplace Listing • Rs. 1,400',
-        lastMessage: 'Can we meet at the CS department library after 2 PM?',
-        lastTime: '45m ago',
-        unreadCount: 1,
-        messages: [
-          ChatMessage(id: 'm4', isMe: false, text: 'Hi, is the Silberschatz OS book still available?', time: '11:00 AM'),
-          ChatMessage(id: 'm5', isMe: true, text: 'Yes, 10th edition in mint condition.', time: '11:15 AM'),
-          ChatMessage(id: 'm6', isMe: false, text: 'Can we meet at the CS department library after 2 PM?', time: '11:30 AM'),
-        ],
-      ),
-      ConversationItem(
-        id: '3',
-        contactName: 'Bilal Cheema',
-        contactVerified: true,
-        roleBadge: 'Cycle Rental',
-        contextTitle: 'Phoenix Commuter Cycle Rental',
-        contextSubtitle: 'Hostel Block B • Rs. 200/day',
-        lastMessage: 'Key and helmet are deposited at the hostel security desk.',
-        lastTime: 'Yesterday',
-        unreadCount: 0,
-        messages: [
-          ChatMessage(id: 'm7', isMe: true, text: 'Hey Bilal, cycle returned safely.', time: 'Yesterday 6:00 PM'),
-          ChatMessage(id: 'm8', isMe: false, text: 'Key and helmet are deposited at the hostel security desk.', time: 'Yesterday 6:05 PM'),
-        ],
-      ),
-    ];
+    _conversations = [];
   }
 
   void _openChat(ConversationItem conversation) {

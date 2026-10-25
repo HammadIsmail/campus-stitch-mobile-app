@@ -1,6 +1,17 @@
+import 'package:flutter/foundation.dart';
+
 class ApiConstants {
-  // Production live Next.js backend on Vercel
-  static String baseUrl = 'https://campus-stitch.vercel.app';
+  static String? _customBaseUrl;
+
+  // Development: Use local Next.js server (http://localhost:3000) when running Flutter Web locally
+  // Production: Use live Vercel deployment (https://campus-stitch.vercel.app)
+  static String get baseUrl =>
+      _customBaseUrl ??
+      ((kIsWeb && kDebugMode)
+          ? 'http://localhost:3000'
+          : 'https://campus-stitch.vercel.app');
+
+  static set baseUrl(String url) => _customBaseUrl = url;
 
   // Auth Endpoints
   static String get signIn => '$baseUrl/api/auth/sign-in';
@@ -21,6 +32,9 @@ class ApiConstants {
   // Domain Feature Endpoints
   static String get communityPosts => '$baseUrl/api/community/posts';
   static String get communityVote => '$baseUrl/api/community/posts/vote';
+  static String get communityList => '$baseUrl/api/community/list';
+  static String get communityJoin => '$baseUrl/api/community/join';
+  static String get communityComments => '$baseUrl/api/community/comments';
 
   // Push Notifications
   static String get pushToken => '$baseUrl/api/notifications/token';
@@ -35,6 +49,10 @@ class ApiConstants {
 
   // Marketplace Endpoints
   static String get marketListings => '$baseUrl/api/market';
+
+  // Hostel Hub Endpoints
+  static String get hostelRoommates => '$baseUrl/api/hostel/roommates';
+  static String get hostelServices => '$baseUrl/api/hostel/services';
 
   // Image & File Upload
   static String get upload => '$baseUrl/api/upload';

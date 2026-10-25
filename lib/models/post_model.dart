@@ -63,6 +63,7 @@ class PostModel {
     int? upvotes,
     int? downvotes,
     int? score,
+    int? commentsCount,
     int? userVote,
   }) {
     return PostModel(
@@ -79,7 +80,7 @@ class PostModel {
       upvotes: upvotes ?? this.upvotes,
       downvotes: downvotes ?? this.downvotes,
       score: score ?? this.score,
-      commentsCount: commentsCount,
+      commentsCount: commentsCount ?? this.commentsCount,
       createdAt: createdAt,
       userVote: userVote ?? this.userVote,
     );

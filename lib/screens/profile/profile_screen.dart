@@ -3,7 +3,6 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/state/auth_state.dart';
 import '../../core/state/theme_state.dart';
 import '../../core/theme/app_theme.dart';
-import '../admin/campus_admin_screen.dart';
 import '../auth/sign_in_screen.dart';
 import '../legal/terms_screen.dart';
 import '../legal/privacy_screen.dart';
@@ -255,25 +254,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                       ),
                     ),
                     const SizedBox(height: 16),
-
-                    if (isCampusAdmin) ...[
-                      OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.campusAdmin,
-                          side: const BorderSide(color: AppColors.campusAdmin),
-                          minimumSize: const Size.fromHeight(48),
-                        ),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const CampusAdminScreen()),
-                          );
-                        },
-                        icon: const Icon(Icons.admin_panel_settings),
-                        label: const Text('Open Campus Verification Console'),
-                      ),
-                      const SizedBox(height: 16),
-                    ],
                   ],
                 ),
               ),

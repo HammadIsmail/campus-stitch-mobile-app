@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/state/auth_state.dart';
 import '../../core/theme/app_theme.dart';
-import '../admin/campus_admin_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../messages/messages_screen.dart';
 import '../search/campus_search_screen.dart';
@@ -22,7 +21,6 @@ class HomeScreen extends StatelessWidget {
         final user = AuthState.instance.user;
         final campusName = AuthState.instance.activeCampusName;
         final universityName = AuthState.instance.activeUniversityName;
-        final isCampusAdmin = AuthState.instance.isCampusAdmin;
 
         return Scaffold(
           appBar: AppBar(
@@ -200,69 +198,6 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 14),
-
-
-
-                // Campus Admin Student Verification Shortcut
-                if (isCampusAdmin) ...[
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const CampusAdminScreen()),
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF1E3A8A), Color(0xFF172554)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF1E3A8A).withValues(alpha: 0.25),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(Icons.admin_panel_settings, color: Colors.white, size: 24),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Campus Verification Portal',
-                                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  'Review student cards vs live selfie photos for $campusName',
-                                  style: const TextStyle(color: Colors.white70, fontSize: 11),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const Icon(Icons.arrow_forward_ios, color: Colors.white70, size: 14),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
 
                 // Quick Services Grid
                 const Text(

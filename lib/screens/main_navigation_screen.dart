@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/theme/app_theme.dart';
-import 'home/home_screen.dart';
+import 'hostel/hostel_screen.dart';
 import 'commute/commute_screen.dart';
 import 'market/market_screen.dart';
 import 'community/community_screen.dart';
@@ -23,7 +23,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   @override
   Widget build(BuildContext context) {
     final screens = [
-      HomeScreen(onNavigateTab: _onTabTapped),
+      const HostelScreen(),
       const CommuteScreen(),
       const MarketScreen(),
       const CommunityScreen(),
@@ -43,9 +43,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             : AppColors.zinc200,
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Home',
+            icon: Icon(Icons.apartment_outlined),
+            selectedIcon: Icon(Icons.apartment),
+            label: 'Hostel',
           ),
           NavigationDestination(
             icon: Icon(Icons.directions_car_outlined),
