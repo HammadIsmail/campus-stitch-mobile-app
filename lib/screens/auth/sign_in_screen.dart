@@ -198,7 +198,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 ),
                 const SizedBox(height: 6),
                 const Text(
-                  'Multi-tenant campus life, commute & verification',
+                  'Campus life, commute & verification',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 12,

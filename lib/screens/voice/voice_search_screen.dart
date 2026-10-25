@@ -123,7 +123,7 @@ class _VoiceSearchScreenState extends State<VoiceSearchScreen> with SingleTicker
           _resultType = 'general';
           _resultData = {
             'title': 'Campus Record Match',
-            'status': 'Found isolated tenant records for ${AuthState.instance.activeCampusName}',
+            'status': 'Found campus records for ${AuthState.instance.activeCampusName}',
           };
         }
       });

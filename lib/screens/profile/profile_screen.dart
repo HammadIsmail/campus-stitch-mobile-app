@@ -338,43 +338,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                     ),
                     const SizedBox(height: 16),
 
-                    // Campus Tenant Scope Card
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Row(
-                              children: [
-                                Icon(Icons.security, size: 18, color: AppColors.success),
-                                SizedBox(width: 8),
-                                Text(
-                                  'TENANT DATA ISOLATION',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 0.8,
-                                    color: AppColors.zinc500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Active Scope: ${AuthState.instance.activeCampusName}',
-                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-                            ),
-                            const SizedBox(height: 4),
-                            const Text(
-                              'Your carpools, peer listings, and discussion threads are strictly isolated to your registered campus tenant. No cross-tenant data leakage is permitted.',
-                              style: TextStyle(fontSize: 11, color: AppColors.zinc500, height: 1.3),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
 
                     // Legal & Policies Card
                     Card(
@@ -438,46 +401,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                     ),
                     const SizedBox(height: 16),
 
-                    // App Information & Version
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'APPLICATION INFORMATION',
-                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.zinc500, letterSpacing: 0.8),
-                            ),
-                            const SizedBox(height: 8),
-                            const Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text('Version', style: TextStyle(fontSize: 12, color: AppColors.zinc500)),
-                                Text('1.0.0 (Production Release)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
-                              ],
-                            ),
-                            const SizedBox(height: 6),
-                            const Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text('Engine', style: TextStyle(fontSize: 12, color: AppColors.zinc500)),
-                                Text('Flutter 3.47 • Dart 3.13', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
-                              ],
-                            ),
-                            const SizedBox(height: 6),
-                            const Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text('Security Hardening', style: TextStyle(fontSize: 12, color: AppColors.zinc500)),
-                                Text('OWASP M1-M7 Enforced', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.success)),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
 
                     // Sign Out Button
                     ElevatedButton.icon(

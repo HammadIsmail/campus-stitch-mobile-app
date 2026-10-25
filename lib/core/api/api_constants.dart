@@ -28,6 +28,16 @@ class ApiConstants {
   // Profile & Account Deletion
   static String get profile => '$baseUrl/api/profile';
 
+  // Commute & Rides Endpoints
+  static String get commuteRides => '$baseUrl/api/commute/rides';
+  static String get commuteBook => '$baseUrl/api/commute/book';
+  static String get commuteBikes => '$baseUrl/api/commute/bikes';
+
+  // Marketplace Endpoints
+  static String get marketListings => '$baseUrl/api/market';
+
   // In-App Self-Update
   static String get appVersion => '$baseUrl/api/app/version';
 }
+
+

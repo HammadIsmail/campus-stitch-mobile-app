@@ -146,7 +146,7 @@ class TermsScreen extends StatelessWidget {
             const SizedBox(height: 20),
             Center(
               child: Text(
-                'CampuStitch • Multi-Tenant University Network',
+                'CampuStitch • University Campus Network',
                 style: TextStyle(fontSize: 11, color: isDark ? AppColors.zinc500 : AppColors.zinc400),
               ),
             ),

@@ -102,7 +102,7 @@ class PrivacyScreen extends StatelessWidget {
               number: '1',
               title: 'Data Controller & Overview',
               content:
-                  'CampuStitch operates as a multi-tenant university platform connecting students within Pakistani campuses. We respect your personal data and adhere strictly to Privacy-by-Design principles. Student records are segregated by campus and never sold to third-party advertising companies.',
+                  'CampuStitch operates as a campus university platform connecting students within Pakistani campuses. We respect your personal data and adhere strictly to Privacy-by-Design principles. Student records are segregated by campus and never sold to third-party advertising companies.',
             ),
 
             _buildSection(
@@ -124,9 +124,9 @@ class PrivacyScreen extends StatelessWidget {
             _buildSection(
               context,
               number: '4',
-              title: 'Tenant Isolation & Data Protection',
+              title: 'Campus Scoping & Data Protection',
               content:
-                  'CampuStitch features strict multi-tenant isolation. All records are keyed to your specific university campus (campus_id). Students and administrators from one campus cannot access or view records of another campus. All data is protected with TLS 1.3 encryption in transit and encrypted storage at rest.',
+                  'CampuStitch features strict campus data isolation. All records are keyed to your specific university campus. Students and administrators from one campus cannot access or view records of another campus. All data is protected with TLS 1.3 encryption in transit and encrypted storage at rest.',
             ),
 
             _buildSection(

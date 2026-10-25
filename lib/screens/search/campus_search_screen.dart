@@ -1,10 +1,14 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/state/auth_state.dart';
 import '../../core/theme/app_theme.dart';
+import '../../services/commute_service.dart';
+import '../../services/community_service.dart';
+import '../../services/market_service.dart';
 
 class SearchResultItem {
   final String id;
-  final String category; // 'Carpool', 'Marketplace', 'Cycle Rental', 'Community'
+  final String category; // 'Carpool', 'Marketplace', 'Community'
   final String title;
   final String subtitle;
   final String meta;
@@ -32,100 +36,101 @@ class CampusSearchScreen extends StatefulWidget {
 class _CampusSearchScreenState extends State<CampusSearchScreen> {
   late TextEditingController _searchController;
   String _selectedCategory = 'All';
-
-  final List<SearchResultItem> _allItems = [
-    SearchResultItem(
-      id: 'c1',
-      category: 'Carpool',
-      title: 'Khurrialwala to Campus Morning Carpool',
-      subtitle: 'Toyota Corolla • Ahmed Raza • Departure 8:00 AM',
-      meta: 'Rs. 250 / seat • 3 seats left',
-      icon: Icons.directions_car,
-    ),
-    SearchResultItem(
-      id: 'c2',
-      category: 'Carpool',
-      title: 'Canal Road to Main Campus Shuttle Split',
-      subtitle: 'Suzuki Alto • Muhammad Bilal • Departure 7:45 AM',
-      meta: 'Rs. 150 / seat • 2 seats left',
-      icon: Icons.directions_car,
-    ),
-    SearchResultItem(
-      id: 'm1',
-      category: 'Marketplace',
-      title: 'Operating System Concepts (10th Edition)',
-      subtitle: 'Silberschatz • CS Dept • Mint condition',
-      meta: 'Rs. 1,400 • Seller: Sara Khan (Verified)',
-      icon: Icons.menu_book,
-    ),
-    SearchResultItem(
-      id: 'm2',
-      category: 'Marketplace',
-      title: 'Casio fx-991EX Scientific Calculator',
-      subtitle: 'Original natural display • Engineering faculty',
-      meta: 'Rs. 3,200 • Seller: Usman Tariq (Verified)',
-      icon: Icons.calculate,
-    ),
-    SearchResultItem(
-      id: 'm3',
-      category: 'Marketplace',
-      title: 'Semiconductor Phone Cooler for Gaming & Lab',
-      subtitle: 'RGB magnetic clamp • Hostel Block C',
-      meta: 'Rs. 1,800 • Seller: Zain Ali',
-      icon: Icons.memory,
-    ),
-    SearchResultItem(
-      id: 'b1',
-      category: 'Cycle Rental',
-      title: 'Phoenix Commuter Cycle Rental',
-      subtitle: 'Available at Hostel Block B dock',
-      meta: 'Rs. 200 / day • Helmet included',
-      icon: Icons.two_wheeler,
-    ),
-    SearchResultItem(
-      id: 'f1',
-      category: 'Community',
-      title: 'Tips for Operating Systems Lab 3 & Threading',
-      subtitle: 'r/cs-uet • 28 upvotes • 14 comments',
-      meta: 'Posted by Bilal Cheema',
-      icon: Icons.forum,
-    ),
-    SearchResultItem(
-      id: 'f2',
-      category: 'Community',
-      title: 'Upcoming Tech Society Annual Hackathon 2026',
-      subtitle: 'r/campus-events • 45 upvotes • 22 comments',
-      meta: 'Registrations closing this Friday',
-      icon: Icons.campaign,
-    ),
-  ];
+  List<SearchResultItem> _results = [];
+  bool _isSearching = false;
+  Timer? _debounceTimer;
 
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController(text: widget.initialQuery ?? '');
+    if (_searchController.text.trim().isNotEmpty) {
+      _performSearch(_searchController.text.trim());
+    }
   }
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _searchController.dispose();
     super.dispose();
   }
 
-  List<SearchResultItem> get _filteredResults {
-    final query = _searchController.text.trim().toLowerCase();
+  void _onSearchChanged(String query) {
+    _debounceTimer?.cancel();
+    if (query.trim().isEmpty) {
+      setState(() {
+        _results = [];
+        _isSearching = false;
+      });
+      return;
+    }
 
-    return _allItems.where((item) {
-      final matchesCategory = _selectedCategory == 'All' || item.category == _selectedCategory;
-      if (!matchesCategory) return false;
+    _debounceTimer = Timer(const Duration(milliseconds: 350), () {
+      _performSearch(query.trim());
+    });
+  }
 
-      if (query.isEmpty) return true;
+  Future<void> _performSearch(String query) async {
+    if (query.isEmpty) return;
+    setState(() => _isSearching = true);
 
-      return item.title.toLowerCase().contains(query) ||
-          item.subtitle.toLowerCase().contains(query) ||
-          item.category.toLowerCase().contains(query) ||
-          item.meta.toLowerCase().contains(query);
-    }).toList();
+    final campusId = AuthState.instance.activeCampusId;
+    final List<SearchResultItem> aggregated = [];
+
+    try {
+      // 1. Search Commute Rides
+      if (_selectedCategory == 'All' || _selectedCategory == 'Carpool') {
+        final rides = await CommuteService.getRides(campusId: campusId, query: query);
+        for (final r in rides) {
+          aggregated.add(SearchResultItem(
+            id: r.id,
+            category: 'Carpool',
+            title: '${r.fromLocation} → ${r.toLocation}',
+            subtitle: '${r.vehicleType.toUpperCase()} • ${r.organizerName} • ${r.departureTime}',
+            meta: 'Rs. ${r.pricePerSeat} / seat • ${r.availableSeats} left',
+            icon: Icons.directions_car,
+          ));
+        }
+      }
+
+      // 2. Search Market Listings
+      if (_selectedCategory == 'All' || _selectedCategory == 'Marketplace') {
+        final listings = await MarketService.getListings(campusId: campusId, query: query);
+        for (final l in listings) {
+          aggregated.add(SearchResultItem(
+            id: l.id,
+            category: 'Marketplace',
+            title: l.title,
+            subtitle: '${l.category} • ${l.condition}',
+            meta: 'Rs. ${l.price} • Seller: ${l.sellerName}',
+            icon: Icons.shopping_bag_outlined,
+          ));
+        }
+      }
+
+      // 3. Search Community Discussions
+      if (_selectedCategory == 'All' || _selectedCategory == 'Community') {
+        final posts = await CommunityService.getPosts(campusId: campusId, query: query);
+        for (final p in posts) {
+          aggregated.add(SearchResultItem(
+            id: p.id,
+            category: 'Community',
+            title: p.title,
+            subtitle: '${p.communityName} • ${p.authorName}',
+            meta: '${p.score} points • ${p.commentsCount} comments',
+            icon: Icons.forum_outlined,
+          ));
+        }
+      }
+    } catch (_) {}
+
+    if (mounted) {
+      setState(() {
+        _results = aggregated;
+        _isSearching = false;
+      });
+    }
   }
 
   @override
@@ -148,7 +153,7 @@ class _CampusSearchScreenState extends State<CampusSearchScreen> {
             contentPadding: EdgeInsets.zero,
             hintStyle: const TextStyle(fontSize: 15, color: AppColors.zinc500),
           ),
-          onChanged: (_) => setState(() {}),
+          onChanged: _onSearchChanged,
         ),
         actions: [
           if (_searchController.text.isNotEmpty)
@@ -156,7 +161,7 @@ class _CampusSearchScreenState extends State<CampusSearchScreen> {
               icon: const Icon(Icons.clear, size: 18),
               onPressed: () {
                 _searchController.clear();
-                setState(() {});
+                _onSearchChanged('');
               },
             ),
         ],
@@ -168,7 +173,7 @@ class _CampusSearchScreenState extends State<CampusSearchScreen> {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: Row(
-              children: ['All', 'Carpool', 'Marketplace', 'Cycle Rental', 'Community'].map((cat) {
+              children: ['All', 'Carpool', 'Marketplace', 'Community'].map((cat) {
                 final isSelected = _selectedCategory == cat;
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
@@ -176,7 +181,12 @@ class _CampusSearchScreenState extends State<CampusSearchScreen> {
                     label: Text(cat),
                     selected: isSelected,
                     onSelected: (selected) {
-                      if (selected) setState(() => _selectedCategory = cat);
+                      if (selected) {
+                        setState(() => _selectedCategory = cat);
+                        if (_searchController.text.trim().isNotEmpty) {
+                          _performSearch(_searchController.text.trim());
+                        }
+                      }
                     },
                     selectedColor: isDark ? AppColors.white : AppColors.black,
                     labelStyle: TextStyle(
@@ -200,148 +210,99 @@ class _CampusSearchScreenState extends State<CampusSearchScreen> {
           ),
           const Divider(height: 1),
 
-          // Quick suggestion chips when query is empty
-          if (_searchController.text.isEmpty) ...[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-              child: Row(
-                children: [
-                  const Icon(Icons.trending_up, size: 16, color: AppColors.zinc500),
-                  const SizedBox(width: 8),
-                  Text(
-                    'TRENDING IN ${campusName.toUpperCase()}',
-                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.zinc500, letterSpacing: 0.8),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  'Khurrialwala',
-                  'Operating Systems',
-                  'Cycle rental',
-                  'fx-991EX',
-                  'Hostel Block B',
-                ].map((sugg) {
-                  return ActionChip(
-                    label: Text(sugg, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
-                    backgroundColor: isDark ? AppColors.zinc900 : AppColors.zinc100,
-                    side: BorderSide(color: isDark ? AppColors.zinc800 : AppColors.zinc200),
-                    onPressed: () {
-                      _searchController.text = sugg;
-                      setState(() {});
-                    },
-                  );
-                }).toList(),
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
-
-          // Results count
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '${_filteredResults.length} campus record${_filteredResults.length == 1 ? '' : 's'} found',
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.zinc500),
-                ),
-                Text(
-                  'Isolated to $campusName',
-                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.success),
-                ),
-              ],
-            ),
-          ),
-
-          // Results list
+          // Content Area
           Expanded(
-            child: _filteredResults.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.search_off, size: 48, color: isDark ? AppColors.zinc700 : AppColors.zinc400),
-                        const SizedBox(height: 12),
-                        const Text('No matching records found', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-                        const SizedBox(height: 4),
-                        const Text('Try modifying your query or selecting another category.', style: TextStyle(fontSize: 12, color: AppColors.zinc500)),
-                      ],
-                    ),
-                  )
-                : ListView.separated(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _filteredResults.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 10),
-                    itemBuilder: (context, index) {
-                      final item = _filteredResults[index];
-
-                      return Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: isDark ? AppColors.darkCard : AppColors.white,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: isDark ? AppColors.zinc800 : AppColors.zinc200,
+            child: _isSearching
+                ? const Center(child: CircularProgressIndicator())
+                : _searchController.text.trim().isEmpty
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(32),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.search, size: 56, color: isDark ? AppColors.zinc700 : AppColors.zinc300),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'Search Across Campus',
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'Find live rides, marketplace listings, and discussions on $campusName.',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(fontSize: 12, color: AppColors.zinc500),
+                              ),
+                            ],
                           ),
                         ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              width: 36,
-                              height: 36,
-                              decoration: BoxDecoration(
-                                color: isDark ? AppColors.zinc900 : AppColors.zinc100,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Icon(item.icon, size: 18, color: isDark ? AppColors.white : AppColors.black),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
+                      )
+                    : _results.isEmpty
+                        ? Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(32),
                               child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: isDark ? AppColors.zinc900 : AppColors.zinc100,
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      item.category.toUpperCase(),
-                                      style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: AppColors.zinc500, letterSpacing: 0.5),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    item.title,
-                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    item.subtitle,
-                                    style: TextStyle(fontSize: 11, color: isDark ? AppColors.zinc400 : AppColors.zinc600),
+                                  Icon(Icons.search_off, size: 56, color: isDark ? AppColors.zinc700 : AppColors.zinc300),
+                                  const SizedBox(height: 16),
+                                  const Text(
+                                    'No Results Found',
+                                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                                   ),
                                   const SizedBox(height: 6),
                                   Text(
-                                    item.meta,
-                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.success),
+                                    'No records matched "${_searchController.text.trim()}".',
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(fontSize: 12, color: AppColors.zinc500),
                                   ),
                                 ],
                               ),
                             ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
+                          )
+                        : ListView.separated(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: _results.length,
+                            separatorBuilder: (_, _) => const SizedBox(height: 10),
+                            itemBuilder: (context, index) {
+                              final item = _results[index];
+                              return Card(
+                                child: ListTile(
+                                  leading: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: isDark ? AppColors.zinc800 : AppColors.zinc100,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Icon(item.icon, size: 20),
+                                  ),
+                                  title: Text(
+                                    item.title,
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                  ),
+                                  subtitle: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        item.subtitle,
+                                        style: const TextStyle(fontSize: 11, color: AppColors.zinc500),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        item.meta,
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w600,
+                                          color: isDark ? AppColors.zinc400 : AppColors.zinc700,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
           ),
         ],
       ),

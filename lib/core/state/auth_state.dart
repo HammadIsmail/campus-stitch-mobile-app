@@ -19,6 +19,7 @@ class AuthState extends ChangeNotifier {
   // Active Tenant Scope
   String get activeCampusId => _user?.campusId ?? 'camp_uet_main';
   String get activeCampusName => _user?.campusName ?? 'Main Campus (Lahore)';
+  String get activeUniversityId => _user?.universityId ?? 'uni_uet';
   String get activeUniversityName => _user?.universityName ?? 'UET Lahore';
   String get role => _user?.role ?? 'student';
 

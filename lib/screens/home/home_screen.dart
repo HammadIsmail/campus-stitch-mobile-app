@@ -201,28 +201,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 14),
 
-                // Tenant Isolation Indicator Banner
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: AppColors.zinc800.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.zinc800.withValues(alpha: 0.15)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.location_on, size: 16, color: AppColors.success),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'You are viewing $campusName. All feeds and records are isolated to your campus.',
-                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
+
 
                 // Campus Admin Student Verification Shortcut
                 if (isCampusAdmin) ...[

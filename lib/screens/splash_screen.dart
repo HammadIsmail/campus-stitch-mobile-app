@@ -114,7 +114,7 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             const SizedBox(height: 6),
             const Text(
-              'Pakistan Multi-Tenant Campus SuperApp',
+              'Pakistan Campus SuperApp',
               style: TextStyle(
                 fontSize: 12,
                 color: AppColors.zinc500,
