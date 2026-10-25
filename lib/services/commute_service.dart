@@ -172,4 +172,62 @@ class CommuteService {
 
     return [];
   }
+
+  /// Rent a bike
+  static Future<bool> rentBike({
+    required String bikeId,
+    required String renterName,
+    String? renterId,
+    int durationHours = 4,
+  }) async {
+    try {
+      final body = <String, dynamic>{
+        'bikeId': bikeId,
+        'renterName': renterName,
+        'durationHours': durationHours,
+      };
+      if (renterId != null) body['renterId'] = renterId;
+      final res = await ApiClient.post(
+        ApiConstants.commuteBikes,
+        body: body,
+      );
+      return res.success;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Updates ride status (e.g. 'completed', 'cancelled') or available seats
+  static Future<bool> updateRide({
+    required String id,
+    String? status,
+    int? availableSeats,
+    String? notes,
+  }) async {
+    try {
+      final body = <String, dynamic>{'id': id};
+      if (status != null) body['status'] = status;
+      if (availableSeats != null) body['availableSeats'] = availableSeats;
+      if (notes != null) body['notes'] = notes;
+      final res = await ApiClient.patch(
+        ApiConstants.commuteRides,
+        body: body,
+      );
+      return res.success;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Deletes a ride
+  static Future<bool> deleteRide(String id) async {
+    try {
+      final res = await ApiClient.delete(
+        '${ApiConstants.commuteRides}?id=$id',
+      );
+      return res.success;
+    } catch (_) {
+      return false;
+    }
+  }
 }

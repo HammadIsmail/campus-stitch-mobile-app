@@ -81,4 +81,13 @@ class CommunityService {
       },
     );
   }
+
+  static Future<bool> deletePost(String postId) async {
+    try {
+      final res = await ApiClient.delete('${ApiConstants.communityPosts}?id=$postId');
+      return res.success;
+    } catch (_) {
+      return false;
+    }
+  }
 }

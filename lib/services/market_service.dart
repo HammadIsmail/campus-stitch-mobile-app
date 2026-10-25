@@ -127,4 +127,38 @@ class MarketService {
       return false;
     }
   }
+
+  /// Updates listing status (e.g. 'sold', 'reserved') or price
+  static Future<bool> updateListing({
+    required String id,
+    String? status,
+    int? price,
+    String? title,
+  }) async {
+    try {
+      final body = <String, dynamic>{'id': id};
+      if (status != null) body['status'] = status;
+      if (price != null) body['price'] = price;
+      if (title != null) body['title'] = title;
+      final res = await ApiClient.patch(
+        ApiConstants.marketListings,
+        body: body,
+      );
+      return res.success;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Deletes a listing
+  static Future<bool> deleteListing(String id) async {
+    try {
+      final res = await ApiClient.delete(
+        '${ApiConstants.marketListings}?id=$id',
+      );
+      return res.success;
+    } catch (_) {
+      return false;
+    }
+  }
 }
