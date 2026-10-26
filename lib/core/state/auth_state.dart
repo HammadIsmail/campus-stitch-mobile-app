@@ -26,6 +26,23 @@ class AuthState extends ChangeNotifier {
   bool get isSuperAdmin => _user?.isSuperAdmin ?? false;
   bool get isCampusAdmin => _user?.isCampusAdmin ?? false;
 
+  void updateUser(UserModel updatedUser) {
+    _user = updatedUser;
+    notifyListeners();
+  }
+
+  Future<void> refreshUser() async {
+    try {
+      final refreshed = await AuthService.checkCurrentSession();
+      if (refreshed != null) {
+        _user = refreshed;
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error refreshing user session: $e');
+    }
+  }
+
   Future<void> init() async {
     _isLoading = true;
     notifyListeners();

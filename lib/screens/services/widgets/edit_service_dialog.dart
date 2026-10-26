@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../models/hostel_model.dart';
-import '../../../services/hostel_service.dart';
+import '../../../models/service_model.dart';
+import '../../../services/campus_service.dart';
 
 class EditServiceDialog extends StatefulWidget {
-  final HostelServiceModel service;
-  final ValueChanged<HostelServiceModel> onUpdated;
+  final CampusServiceModel service;
+  final ValueChanged<CampusServiceModel> onUpdated;
 
   const EditServiceDialog({
     super.key,
@@ -15,8 +15,8 @@ class EditServiceDialog extends StatefulWidget {
 
   static Future<void> show(
     BuildContext context, {
-    required HostelServiceModel service,
-    required ValueChanged<HostelServiceModel> onUpdated,
+    required CampusServiceModel service,
+    required ValueChanged<CampusServiceModel> onUpdated,
   }) {
     return showDialog(
       context: context,
@@ -68,7 +68,7 @@ class _EditServiceDialogState extends State<EditServiceDialog> {
     setState(() => _isSaving = true);
     final scaffold = ScaffoldMessenger.of(context);
 
-    final success = await HostelService.updateService(
+    final success = await CampusService.updateService(
       id: widget.service.id,
       name: title,
       rate: rate,
@@ -170,7 +170,7 @@ class _EditServiceDialogState extends State<EditServiceDialog> {
                 ),
                 const SizedBox(height: 14),
 
-                Text('Location / Hostel', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
+                Text('Location / Campus Block', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
                 const SizedBox(height: 6),
                 TextField(
                   controller: _locationCtrl,

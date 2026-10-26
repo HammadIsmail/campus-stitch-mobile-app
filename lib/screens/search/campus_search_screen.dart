@@ -3,12 +3,11 @@ import 'package:flutter/material.dart';
 import '../../core/state/auth_state.dart';
 import '../../core/theme/app_theme.dart';
 import '../../services/commute_service.dart';
-import '../../services/community_service.dart';
 import '../../services/market_service.dart';
 
 class SearchResultItem {
   final String id;
-  final String category; // 'Carpool', 'Marketplace', 'Community'
+  final String category; // 'Carpool', 'Marketplace'
   final String title;
   final String subtitle;
   final String meta;
@@ -108,21 +107,6 @@ class _CampusSearchScreenState extends State<CampusSearchScreen> {
           ));
         }
       }
-
-      // 3. Search Community Discussions
-      if (_selectedCategory == 'All' || _selectedCategory == 'Community') {
-        final posts = await CommunityService.getPosts(campusId: campusId, query: query);
-        for (final p in posts) {
-          aggregated.add(SearchResultItem(
-            id: p.id,
-            category: 'Community',
-            title: p.title,
-            subtitle: '${p.communityName} • ${p.authorName}',
-            meta: '${p.score} points • ${p.commentsCount} comments',
-            icon: Icons.forum_outlined,
-          ));
-        }
-      }
     } catch (_) {}
 
     if (mounted) {
@@ -173,7 +157,7 @@ class _CampusSearchScreenState extends State<CampusSearchScreen> {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: Row(
-              children: ['All', 'Carpool', 'Marketplace', 'Community'].map((cat) {
+              children: ['All', 'Carpool', 'Marketplace'].map((cat) {
                 final isSelected = _selectedCategory == cat;
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),

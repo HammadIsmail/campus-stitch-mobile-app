@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
+import '../../widgets/empty_state_view.dart';
+import '../../widgets/public_profile_dialog.dart';
+import '../../widgets/verified_student_badge.dart';
 
 class ChatMessage {
   final String id;
@@ -81,21 +84,10 @@ class _MessagesScreenState extends State<MessagesScreen> {
         title: const Text('Campus Messages'),
       ),
       body: _conversations.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.chat_bubble_outline,
-                    size: 48,
-                    color: isDark ? AppColors.zinc700 : AppColors.zinc400,
-                  ),
-                  const SizedBox(height: 12),
-                  const Text('No messages yet', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 4),
-                  const Text('Direct messages with carpool hosts and campus peers will appear here.', style: TextStyle(fontSize: 12, color: AppColors.zinc500)),
-                ],
-              ),
+          ? const EmptyStateView(
+              icon: Icons.chat_bubble_outline,
+              title: 'No Messages Yet',
+              message: 'Direct messages with carpool hosts, marketplace sellers, and campus peers will appear here.',
             )
           : ListView.separated(
               padding: const EdgeInsets.all(16),
@@ -276,49 +268,63 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 0,
-        title: Row(
-          children: [
-            CircleAvatar(
-              radius: 16,
-              backgroundColor: isDark ? AppColors.zinc800 : AppColors.zinc200,
-              child: Text(
-                widget.conversation.contactName[0].toUpperCase(),
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  color: isDark ? AppColors.white : AppColors.black,
+        title: InkWell(
+          onTap: () {
+            PublicProfileDialog.show(
+              context,
+              userId: widget.conversation.contactName,
+              fallbackName: widget.conversation.contactName,
+              fallbackVerified: widget.conversation.contactVerified,
+            );
+          },
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 16,
+                backgroundColor: isDark ? AppColors.zinc800 : AppColors.zinc200,
+                child: Text(
+                  widget.conversation.contactName.isNotEmpty
+                      ? widget.conversation.contactName[0].toUpperCase()
+                      : 'S',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: isDark ? AppColors.white : AppColors.black,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Flexible(
-                        child: Text(
-                          widget.conversation.contactName,
-                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
-                          overflow: TextOverflow.ellipsis,
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            widget.conversation.contactName,
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                      if (widget.conversation.contactVerified) ...[
+                        if (widget.conversation.contactVerified) ...[
+                          const SizedBox(width: 4),
+                          const VerifiedStudentBadge(size: 14),
+                        ],
                         const SizedBox(width: 4),
-                        const Icon(Icons.verified, size: 14, color: AppColors.success),
+                        const Icon(Icons.open_in_new, size: 11, color: AppColors.zinc500),
                       ],
-                    ],
-                  ),
-                  Text(
-                    widget.conversation.contextTitle,
-                    style: const TextStyle(fontSize: 10, color: AppColors.zinc500),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+                    ),
+                    Text(
+                      widget.conversation.contextTitle,
+                      style: const TextStyle(fontSize: 10, color: AppColors.zinc500),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
       body: Column(

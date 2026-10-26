@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../core/api/api_client.dart';
+import '../../core/api/api_constants.dart';
 import '../../core/state/auth_state.dart';
 import '../../core/state/theme_state.dart';
 import '../../core/theme/app_theme.dart';
+import '../../widgets/public_profile_dialog.dart';
+import '../../widgets/verified_student_badge.dart';
 import '../auth/sign_in_screen.dart';
 import '../legal/terms_screen.dart';
 import '../legal/privacy_screen.dart';
@@ -17,6 +22,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  bool _isUploadingAvatar = false;
 
   @override
   void initState() {
@@ -82,28 +88,107 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                         padding: const EdgeInsets.all(20),
                         child: Column(
                           children: [
-                            CircleAvatar(
-                              radius: 36,
-                              backgroundColor: isDark ? AppColors.white : AppColors.black,
-                              child: Text(
-                                (user?.name.isNotEmpty == true ? user!.name[0] : 'S').toUpperCase(),
-                                style: TextStyle(
-                                  color: isDark ? AppColors.black : AppColors.white,
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.w900,
-                                ),
+                            GestureDetector(
+                              onTap: () => _showAvatarOptionsSheet(context),
+                              child: Stack(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 40,
+                                    backgroundColor: isDark ? AppColors.zinc800 : AppColors.zinc200,
+                                    backgroundImage: (user?.avatarUrl != null && user!.avatarUrl!.isNotEmpty)
+                                        ? NetworkImage(user.avatarUrl!)
+                                        : null,
+                                    child: (user?.avatarUrl == null || user!.avatarUrl!.isEmpty)
+                                        ? Text(
+                                            (user?.name.isNotEmpty == true ? user!.name[0] : 'S').toUpperCase(),
+                                            style: TextStyle(
+                                              color: isDark ? AppColors.white : AppColors.black,
+                                              fontSize: 32,
+                                              fontWeight: FontWeight.w900,
+                                            ),
+                                          )
+                                        : null,
+                                  ),
+                                  if (_isUploadingAvatar)
+                                    Positioned.fill(
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withValues(alpha: 0.5),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Center(
+                                          child: SizedBox(
+                                            width: 24,
+                                            height: 24,
+                                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  Positioned(
+                                    bottom: 0,
+                                    right: 0,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        color: isDark ? AppColors.zinc900 : AppColors.white,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: isDark ? AppColors.zinc700 : AppColors.zinc300,
+                                        ),
+                                      ),
+                                      child: Icon(
+                                        Icons.camera_alt,
+                                        size: 14,
+                                        color: isDark ? AppColors.white : AppColors.black,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                             const SizedBox(height: 12),
-                            Text(
-                              user?.name ?? 'Student',
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    user?.name ?? 'Student',
+                                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (user?.isVerified == true) ...[
+                                  const SizedBox(width: 6),
+                                  const VerifiedStudentBadge(size: 18),
+                                ],
+                              ],
                             ),
                             const SizedBox(height: 4),
                             Text(
                               user?.email ?? '',
                               style: const TextStyle(fontSize: 12, color: AppColors.zinc500),
                             ),
+                            if (user?.bio != null && user!.bio!.trim().isNotEmpty) ...[
+                              const SizedBox(height: 10),
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: isDark ? AppColors.zinc900 : AppColors.zinc100,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  user.bio!.trim(),
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontStyle: FontStyle.italic,
+                                    color: isDark ? AppColors.zinc300 : AppColors.zinc700,
+                                  ),
+                                ),
+                              ),
+                            ],
                             const SizedBox(height: 12),
 
                             // Role & Verification Tags
@@ -157,6 +242,44 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                                 ),
                               ],
                             ),
+                            const SizedBox(height: 14),
+                            // Quick Actions: Edit Profile & Preview
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    style: OutlinedButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(vertical: 10),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                    ),
+                                    onPressed: () => _showEditProfileSheet(context),
+                                    icon: const Icon(Icons.edit_note_outlined, size: 16),
+                                    label: const Text('Edit Bio & Phone', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    style: OutlinedButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(vertical: 10),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                    ),
+                                    onPressed: () {
+                                      if (user != null) {
+                                        PublicProfileDialog.show(
+                                          context,
+                                          userId: user.userId,
+                                          fallbackName: user.name,
+                                          fallbackVerified: user.isVerified,
+                                        );
+                                      }
+                                    },
+                                    icon: const Icon(Icons.visibility_outlined, size: 16),
+                                    label: const Text('Public Preview', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ],
                         ),
                       ),
@@ -198,7 +321,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'CAMPUS AFFILIATION',
+                              'CAMPUS AFFILIATION & CONTACT',
                               style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.zinc500, letterSpacing: 0.8),
                             ),
                             const SizedBox(height: 12),
@@ -209,6 +332,10 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                             _buildDetailRow(Icons.badge, 'Student ID', user?.studentId ?? 'N/A'),
                             const Divider(height: 16),
                             _buildDetailRow(Icons.menu_book, 'Degree Program', user?.program ?? 'BS Computer Science'),
+                            if (user?.phone != null && user!.phone!.isNotEmpty) ...[
+                              const Divider(height: 16),
+                              _buildDetailRow(Icons.phone_outlined, 'Contact Phone', user.phone!),
+                            ],
                           ],
                         ),
                       ),
@@ -804,6 +931,292 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 },
               ),
               const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showAvatarOptionsSheet(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? const Color(0xFF18181B) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Change Profile Photo',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: isDark ? Colors.white : AppColors.black,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: const Icon(Icons.camera_alt_outlined),
+                title: const Text('Take Live Photo'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickAndUploadAvatar(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library_outlined),
+                title: const Text('Choose from Gallery'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickAndUploadAvatar(ImageSource.gallery);
+                },
+              ),
+              if (AuthState.instance.user?.avatarUrl != null &&
+                  AuthState.instance.user!.avatarUrl!.isNotEmpty)
+                ListTile(
+                  leading: const Icon(Icons.delete_outline, color: AppColors.error),
+                  title: const Text('Remove Photo', style: TextStyle(color: AppColors.error)),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _removeAvatar();
+                  },
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickAndUploadAvatar(ImageSource source) async {
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(
+        source: source,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 85,
+      );
+      if (picked == null) return;
+
+      setState(() => _isUploadingAvatar = true);
+
+      final bytes = await picked.readAsBytes();
+      final filename = 'avatar_${DateTime.now().millisecondsSinceEpoch}.jpg';
+
+      final uploadRes = await ApiClient.uploadBytes(
+        ApiConstants.upload,
+        bytes: bytes,
+        filename: filename,
+        fields: {'folder': 'campus_stitch/avatars'},
+      );
+
+      if (!uploadRes.success || uploadRes.data is! Map || uploadRes.data['url'] == null) {
+        throw Exception(uploadRes.message ?? 'Failed to upload image.');
+      }
+
+      final avatarUrl = uploadRes.data['url'] as String;
+      final user = AuthState.instance.user;
+
+      if (user != null) {
+        final patchRes = await ApiClient.patch(
+          ApiConstants.profile,
+          body: {
+            'userId': user.userId,
+            'avatarUrl': avatarUrl,
+          },
+        );
+
+        if (patchRes.success) {
+          AuthState.instance.updateUser(user.copyWith(avatarUrl: avatarUrl));
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Profile photo updated successfully.'),
+                backgroundColor: AppColors.success,
+              ),
+            );
+          }
+        } else {
+          throw Exception(patchRes.message ?? 'Failed to save avatar URL to profile.');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(ApiClient.humanizeError(e)),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUploadingAvatar = false);
+      }
+    }
+  }
+
+  Future<void> _removeAvatar() async {
+    try {
+      setState(() => _isUploadingAvatar = true);
+      final user = AuthState.instance.user;
+      if (user != null) {
+        await ApiClient.patch(
+          ApiConstants.profile,
+          body: {
+            'userId': user.userId,
+            'avatarUrl': '',
+          },
+        );
+        AuthState.instance.updateUser(user.copyWith(avatarUrl: ''));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Profile photo removed.')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ApiClient.humanizeError(e)), backgroundColor: AppColors.error),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploadingAvatar = false);
+    }
+  }
+
+  void _showEditProfileSheet(BuildContext context) {
+    final user = AuthState.instance.user;
+    final bioCtrl = TextEditingController(text: user?.bio ?? '');
+    final phoneCtrl = TextEditingController(text: user?.phone ?? '');
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    bool isSaving = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: isDark ? const Color(0xFF18181B) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetCtx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.zinc800 : AppColors.zinc300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Edit Profile Details',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Add a short bio and direct contact phone number for campus peers.',
+                style: TextStyle(fontSize: 11, color: AppColors.zinc500),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: bioCtrl,
+                maxLines: 3,
+                maxLength: 160,
+                decoration: const InputDecoration(
+                  labelText: 'Student Bio',
+                  hintText: 'e.g. CS Sophomore @ UET. Tech enthusiast & daily commuter.',
+                  alignLabelWithHint: true,
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: phoneCtrl,
+                keyboardType: TextInputType.phone,
+                decoration: const InputDecoration(
+                  labelText: 'Contact Phone / WhatsApp',
+                  hintText: '+92 300 1234567',
+                  prefixIcon: Icon(Icons.phone_outlined, size: 20),
+                ),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: isSaving
+                    ? null
+                    : () async {
+                        setSheetState(() => isSaving = true);
+                        try {
+                          final newBio = bioCtrl.text.trim();
+                          final newPhone = phoneCtrl.text.trim();
+
+                          final res = await ApiClient.patch(
+                            ApiConstants.profile,
+                            body: {
+                              'userId': user?.userId,
+                              'bio': newBio,
+                              'phone': newPhone,
+                            },
+                          );
+
+                          if (res.success && user != null) {
+                            AuthState.instance.updateUser(
+                              user.copyWith(bio: newBio, phone: newPhone),
+                            );
+                            if (sheetCtx.mounted) Navigator.pop(sheetCtx);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Profile updated successfully!'),
+                                  backgroundColor: AppColors.success,
+                                ),
+                              );
+                            }
+                          } else {
+                            throw Exception(res.message ?? 'Failed to update profile.');
+                          }
+                        } catch (e) {
+                          setSheetState(() => isSaving = false);
+                          if (sheetCtx.mounted) {
+                            ScaffoldMessenger.of(sheetCtx).showSnackBar(
+                              SnackBar(
+                                content: Text(ApiClient.humanizeError(e)),
+                                backgroundColor: AppColors.error,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                child: isSaving
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Text('Save Changes', style: TextStyle(fontWeight: FontWeight.w800)),
+              ),
             ],
           ),
         ),

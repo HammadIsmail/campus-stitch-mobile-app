@@ -50,9 +50,9 @@ class ApiConstants {
   // Marketplace Endpoints
   static String get marketListings => '$baseUrl/api/market';
 
-  // Hostel Hub Endpoints
-  static String get hostelRoommates => '$baseUrl/api/hostel/roommates';
-  static String get hostelServices => '$baseUrl/api/hostel/services';
+  // Campus Services Endpoints
+  static String get campusServices => '$baseUrl/api/services';
+  static String get hostelServices => campusServices;
 
   // Image & File Upload
   static String get upload => '$baseUrl/api/upload';

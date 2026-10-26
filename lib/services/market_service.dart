@@ -106,6 +106,7 @@ class MarketService {
     required String condition,
     required String description,
     required String location,
+    required String imageUrl,
   }) async {
     try {
       final res = await ApiClient.post(
@@ -120,6 +121,7 @@ class MarketService {
           'condition': condition,
           'description': description.trim(),
           'location': location.trim(),
+          'image_url': imageUrl.trim(),
         },
       );
       return res.success;
@@ -138,6 +140,7 @@ class MarketService {
     String? condition,
     String? description,
     String? location,
+    String? imageUrl,
   }) async {
     try {
       final body = <String, dynamic>{'id': id};
@@ -148,6 +151,7 @@ class MarketService {
       if (condition != null) body['condition'] = condition;
       if (description != null) body['description'] = description;
       if (location != null) body['location'] = location;
+      if (imageUrl != null) body['image_url'] = imageUrl;
       final res = await ApiClient.patch(
         ApiConstants.marketListings,
         body: body,

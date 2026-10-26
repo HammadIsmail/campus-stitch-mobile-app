@@ -110,7 +110,7 @@ class PrivacyScreen extends StatelessWidget {
               number: '2',
               title: 'Personal Information We Collect',
               content:
-                  'We collect only what is strictly necessary to run the campus platform:\n• Student Profile: Name, university email, roll number, department, university and campus affiliation.\n• Identity Verification Data: Photograph of your student ID card and a live camera snapshot (selfie) for facial verification.\n• Module Activity: Ride requests/offers, marketplace listings, hostel posts, and peer-to-peer messages.',
+                  'We collect only what is strictly necessary to run the campus platform:\n• Student Profile: Name, university email, roll number, department, university and campus affiliation.\n• Identity Verification Data: Photograph of your student ID card and a live camera snapshot (selfie) for facial verification.\n• Module Activity: Ride requests/offers, marketplace listings, campus services, and peer-to-peer messages.',
             ),
 
             _buildSection(

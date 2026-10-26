@@ -11,6 +11,8 @@ class UserModel {
   final bool isVerified;
   final String? avatarUrl;
   final String? program;
+  final String? bio;
+  final String? phone;
 
   UserModel({
     required this.userId,
@@ -25,10 +27,46 @@ class UserModel {
     this.isVerified = false,
     this.avatarUrl,
     this.program,
+    this.bio,
+    this.phone,
   });
 
   bool get isSuperAdmin => role == 'super_admin';
   bool get isCampusAdmin => role == 'campus_admin' || role == 'super_admin';
+
+  UserModel copyWith({
+    String? userId,
+    String? email,
+    String? name,
+    String? studentId,
+    String? role,
+    String? universityId,
+    String? universityName,
+    String? campusId,
+    String? campusName,
+    bool? isVerified,
+    String? avatarUrl,
+    String? program,
+    String? bio,
+    String? phone,
+  }) {
+    return UserModel(
+      userId: userId ?? this.userId,
+      email: email ?? this.email,
+      name: name ?? this.name,
+      studentId: studentId ?? this.studentId,
+      role: role ?? this.role,
+      universityId: universityId ?? this.universityId,
+      universityName: universityName ?? this.universityName,
+      campusId: campusId ?? this.campusId,
+      campusName: campusName ?? this.campusName,
+      isVerified: isVerified ?? this.isVerified,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      program: program ?? this.program,
+      bio: bio ?? this.bio,
+      phone: phone ?? this.phone,
+    );
+  }
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
@@ -44,6 +82,8 @@ class UserModel {
       isVerified: json['isVerified'] == true || json['is_verified'] == true,
       avatarUrl: json['avatarUrl']?.toString() ?? json['avatar_url']?.toString(),
       program: json['program']?.toString(),
+      bio: json['bio']?.toString(),
+      phone: json['phone']?.toString(),
     );
   }
 
@@ -61,6 +101,8 @@ class UserModel {
       'isVerified': isVerified,
       'avatarUrl': avatarUrl,
       'program': program,
+      'bio': bio,
+      'phone': phone,
     };
   }
 }

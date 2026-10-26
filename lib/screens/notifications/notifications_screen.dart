@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
+import '../../widgets/empty_state_view.dart';
 
 class NotificationItem {
   final String id;
@@ -177,27 +178,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           // Notifications List
           Expanded(
             child: _filteredNotifications.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.notifications_off_outlined,
-                          size: 48,
-                          color: isDark ? AppColors.zinc700 : AppColors.zinc400,
-                        ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'No notifications found',
-                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'You\'re all caught up with your campus updates.',
-                          style: TextStyle(fontSize: 12, color: AppColors.zinc500),
-                        ),
-                      ],
-                    ),
+                ? const EmptyStateView(
+                    icon: Icons.notifications_off_outlined,
+                    title: 'No Notifications Found',
+                    message: 'You\'re all caught up with your campus updates.',
                   )
                 : ListView.separated(
                     padding: const EdgeInsets.all(16),

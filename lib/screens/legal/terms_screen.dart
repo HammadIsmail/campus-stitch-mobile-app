@@ -98,9 +98,9 @@ class TermsScreen extends StatelessWidget {
             _buildSection(
               context,
               number: '5',
-              title: 'Hostels & Roommate Listings',
+              title: 'Campus Student Services',
               content:
-                  'Hostel notices and flatmate requests must reflect truthful descriptions and genuine rent figures. CampuStitch does not broker tenancy agreements. Any agreements, deposits, or rental arrangements are formed independently between students and property owners.',
+                  'Students may offer or discover peer services (laundry pickup, ironing, thesis printing, device setup, tailoring) inside campus hostel blocks. All service fees are settled directly in cash between students upon delivery or completion. CampuStitch does not process in-app payments, charge commissions, or act as an employer.',
             ),
 
             _buildSection(

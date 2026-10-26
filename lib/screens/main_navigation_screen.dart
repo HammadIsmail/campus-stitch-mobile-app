@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import '../core/theme/app_theme.dart';
-import 'hostel/hostel_screen.dart';
+import 'services/services_screen.dart';
 import 'commute/commute_screen.dart';
 import 'market/market_screen.dart';
-import 'community/community_screen.dart';
 import 'profile/profile_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
@@ -23,10 +22,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   @override
   Widget build(BuildContext context) {
     final screens = [
-      const HostelScreen(),
+      const ServicesScreen(),
       const CommuteScreen(),
       const MarketScreen(),
-      const CommunityScreen(),
       const ProfileScreen(),
     ];
 
@@ -43,9 +41,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             : AppColors.zinc200,
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.apartment_outlined),
-            selectedIcon: Icon(Icons.apartment),
-            label: 'Hostel',
+            icon: Icon(Icons.home_repair_service_outlined),
+            selectedIcon: Icon(Icons.home_repair_service),
+            label: 'Services',
           ),
           NavigationDestination(
             icon: Icon(Icons.directions_car_outlined),
@@ -56,11 +54,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             icon: Icon(Icons.storefront_outlined),
             selectedIcon: Icon(Icons.storefront),
             label: 'Market',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.forum_outlined),
-            selectedIcon: Icon(Icons.forum),
-            label: 'Community',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),

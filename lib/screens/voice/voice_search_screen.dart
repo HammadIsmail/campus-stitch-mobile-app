@@ -40,9 +40,9 @@ class _VoiceSearchScreenState extends State<VoiceSearchScreen> with SingleTicker
       query: 'کیا کوئی کھڑیاںوالہ جا رہا ہے؟',
     ),
     VoiceSuggestion(
-      urdu: 'r/cs-uet کمیونٹی اور ڈسکشن دکھائیں',
-      label: 'Reddit Community: r/cs-uet',
-      query: 'Show me r/cs-uet community discussions and lab tips',
+      urdu: 'ہاسٹل لانڈری یا استری سروس چاہیے',
+      label: 'Campus Services & Laundry',
+      query: 'Show campus services and laundry',
     ),
     VoiceSuggestion(
       urdu: 'ہاسٹل کے لیے فون کولر یا بک چاہیے',
@@ -100,14 +100,14 @@ class _VoiceSearchScreenState extends State<VoiceSearchScreen> with SingleTicker
             'car': 'Toyota Corolla • 3 seats left',
             'fare': 'Rs. 250 / seat',
           };
-        } else if (lower.contains('cs-uet') || lower.contains('کمیونٹی') || lower.contains('community') || lower.contains('lab')) {
-          _aiResponse = 'r/cs-uet میں آپریٹنگ سسٹم لیب 3 کے متعلق لیٹسٹ گائیڈ اور بحث دستیاب ہے۔';
-          _resultType = 'community';
+        } else if (lower.contains('service') || lower.contains('سروس') || lower.contains('laundry') || lower.contains('لانڈری')) {
+          _aiResponse = 'ہاسٹل میں تصدیق شدہ سٹوڈنٹ لانڈری اور استری سروس دستیاب ہے۔ ارسلان خان شام 6 بجے روم سے پک اپ کرتے ہیں۔';
+          _resultType = 'service';
           _resultData = {
-            'title': 'Tips for Operating Systems Lab 3 & Threading',
-            'author': 'Bilal Cheema (BSCS)',
-            'flair': 'Lab Tips',
-            'stats': '28 upvotes • 14 comments',
+            'title': 'Express Student Laundry & Ironing',
+            'driver': 'Arslan Khan (Hostel Block A)',
+            'car': 'Rs. 50 / pair • Daily pickup',
+            'fare': 'Available 6:00 PM - 10:00 PM',
           };
         } else if (lower.contains('کولر') || lower.contains('cooler') || lower.contains('book') || lower.contains('market')) {
           _aiResponse = 'ہاسٹل اور مارکیٹ پلیس میں سیمی کنڈکٹر فون کولر دستیاب ہے۔ قیمت 1,800 روپے ہے۔';
@@ -301,7 +301,7 @@ class _VoiceSearchScreenState extends State<VoiceSearchScreen> with SingleTicker
                             Icon(
                               _resultType == 'ride'
                                   ? Icons.directions_car
-                                  : (_resultType == 'community' ? Icons.forum : Icons.shopping_bag),
+                                  : (_resultType == 'service' ? Icons.build_outlined : Icons.shopping_bag),
                               size: 20,
                               color: isDark ? AppColors.white : AppColors.black,
                             ),

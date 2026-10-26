@@ -3,6 +3,11 @@ import '../../core/state/auth_state.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/ride_model.dart';
 import '../../services/commute_service.dart';
+import '../../widgets/empty_state_view.dart';
+import '../../widgets/public_profile_dialog.dart';
+import '../../widgets/review_modal.dart';
+import '../../widgets/verified_student_badge.dart';
+import '../messages/messages_screen.dart';
 
 class CommuteScreen extends StatefulWidget {
   const CommuteScreen({super.key});
@@ -612,19 +617,35 @@ class _CommuteScreenState extends State<CommuteScreen> with SingleTickerProvider
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    _getVehicleIcon(ride.vehicleType),
-                    const SizedBox(width: 8),
-                    Text(
-                      ride.organizerName,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                InkWell(
+                  onTap: () {
+                    PublicProfileDialog.show(
+                      context,
+                      userId: ride.organizerName,
+                      fallbackName: ride.organizerName,
+                      fallbackVerified: ride.organizerVerified,
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                    child: Row(
+                      children: [
+                        _getVehicleIcon(ride.vehicleType),
+                        const SizedBox(width: 8),
+                        Text(
+                          ride.organizerName,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                        if (ride.organizerVerified) ...[
+                          const SizedBox(width: 6),
+                          const VerifiedStudentBadge(size: 16),
+                        ],
+                        const SizedBox(width: 4),
+                        const Icon(Icons.open_in_new, size: 12, color: AppColors.zinc500),
+                      ],
                     ),
-                    if (ride.organizerVerified) ...[
-                      const SizedBox(width: 6),
-                      const Icon(Icons.verified, size: 16, color: AppColors.success),
-                    ],
-                  ],
+                  ),
                 ),
                 Text(
                   'Rs. ${ride.pricePerSeat} / seat',
@@ -917,32 +938,12 @@ class _CommuteScreenState extends State<CommuteScreen> with SingleTickerProvider
               ),
             )
           else if (filtered.isEmpty)
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 36),
-                child: Column(
-                  children: [
-                    const Icon(Icons.commute, size: 42, color: AppColors.zinc500),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'No active rides found',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      'Be the first to offer a commute ride or carpool split on campus!',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 12, color: AppColors.zinc500),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton.icon(
-                      onPressed: _offerRide,
-                      icon: const Icon(Icons.add, size: 16),
-                      label: const Text('Offer a Ride'),
-                    ),
-                  ],
-                ),
-              ),
+            EmptyStateView(
+              icon: Icons.electric_rickshaw,
+              title: 'No Active Rides Found',
+              message: 'No carpools or vehicle splits match your current search or campus filters.',
+              actionLabel: 'Offer a Ride',
+              onAction: _offerRide,
             )
           else
             ...filtered.map((ride) => _buildRideCard(ride, isDark)),
@@ -1035,30 +1036,41 @@ class _CommuteScreenState extends State<CommuteScreen> with SingleTickerProvider
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 12,
-                        backgroundColor: isDark ? AppColors.white : AppColors.black,
-                        child: Text(
-                          ride.organizerName.isNotEmpty ? ride.organizerName[0].toUpperCase() : 'S',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: isDark ? AppColors.black : AppColors.white,
+                  InkWell(
+                    onTap: () {
+                      PublicProfileDialog.show(
+                        context,
+                        userId: ride.organizerName,
+                        fallbackName: ride.organizerName,
+                        fallbackVerified: ride.organizerVerified,
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 12,
+                          backgroundColor: isDark ? AppColors.white : AppColors.black,
+                          child: Text(
+                            ride.organizerName.isNotEmpty ? ride.organizerName[0].toUpperCase() : 'S',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? AppColors.black : AppColors.white,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        ride.organizerName,
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                      ),
-                      if (ride.organizerVerified) ...[
-                        const SizedBox(width: 4),
-                        const Icon(Icons.verified, size: 14, color: AppColors.success),
+                        const SizedBox(width: 8),
+                        Text(
+                          ride.organizerName,
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                        if (ride.organizerVerified) ...[
+                          const SizedBox(width: 4),
+                          const VerifiedStudentBadge(size: 13),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                   Row(
                     children: [
@@ -1133,98 +1145,365 @@ class _CommuteScreenState extends State<CommuteScreen> with SingleTickerProvider
     );
   }
 
+  void _showListBikeDialog() {
+    final modelCtrl = TextEditingController();
+    final rateCtrl = TextEditingController(text: '150');
+    final depositCtrl = TextEditingController(text: '500');
+    final locationCtrl = TextEditingController(text: 'Campus Hostel Parking');
+    final rulesCtrl = TextEditingController(text: 'Return before 10 PM. Student card required.');
+    String condition = 'Good condition';
+    bool isSubmitting = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (modalCtx, setModalState) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(modalCtx).viewInsets.bottom + 16,
+            left: 20,
+            right: 20,
+            top: 20,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('List Your Bike for Rent', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+                    IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => Navigator.pop(modalCtx)),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                const Text('Help campus peers get around university while earning daily rental income.', style: TextStyle(fontSize: 11, color: AppColors.zinc500)),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: modelCtrl,
+                  decoration: const InputDecoration(labelText: 'Bicycle / Scooter Model', hintText: 'e.g. Phoenix Mountain Bike, Sohrab Classic'),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: rateCtrl,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(labelText: 'Daily Rent (Rs)', prefixText: 'Rs. '),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                        controller: depositCtrl,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(labelText: 'Security Deposit (Rs)', prefixText: 'Rs. '),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: locationCtrl,
+                  decoration: const InputDecoration(labelText: 'Pickup Location on Campus', hintText: 'e.g. Hostel 4 Stand, Library Gate'),
+                ),
+                const SizedBox(height: 10),
+                DropdownButtonFormField<String>(
+                  initialValue: condition,
+                  decoration: const InputDecoration(labelText: 'Vehicle Condition'),
+                  items: const [
+                    DropdownMenuItem(value: 'Like New', child: Text('Like New')),
+                    DropdownMenuItem(value: 'Good condition', child: Text('Good condition')),
+                    DropdownMenuItem(value: 'Fair / Usable', child: Text('Fair / Usable')),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) setModalState(() => condition = val);
+                  },
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: rulesCtrl,
+                  decoration: const InputDecoration(labelText: 'Rental Terms / Rules', hintText: 'e.g. Return with lock key by 9 PM'),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: isSubmitting
+                      ? null
+                      : () async {
+                          final model = modelCtrl.text.trim();
+                          final rate = int.tryParse(rateCtrl.text.trim()) ?? 150;
+                          final deposit = int.tryParse(depositCtrl.text.trim()) ?? 500;
+                          final location = locationCtrl.text.trim();
+                          if (model.isEmpty || location.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Please enter bike model and pickup location.')),
+                            );
+                            return;
+                          }
+                          setModalState(() => isSubmitting = true);
+                          final user = AuthState.instance.user;
+                          final bike = await CommuteService.listBike(
+                            model: model,
+                            dailyRate: rate,
+                            depositAmount: deposit,
+                            location: location,
+                            condition: condition,
+                            rules: rulesCtrl.text.trim(),
+                            ownerName: user?.name ?? 'Student',
+                            campusId: AuthState.instance.activeCampusId,
+                          );
+                          if (modalCtx.mounted) Navigator.pop(modalCtx);
+                          if (bike != null && mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Your bike is now listed for campus rental!'), backgroundColor: AppColors.success),
+                            );
+                            _loadAllData();
+                          }
+                        },
+                  child: isSubmitting
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : const Text('List Bike Now', style: TextStyle(fontWeight: FontWeight.w800)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildBikesTab(bool isDark) {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        if (_bikes.isEmpty)
-          const Card(
-            child: Padding(
-              padding: EdgeInsets.all(32),
-              child: Center(
-                child: Text('No bikes listed for rent currently.'),
-              ),
+        // Action Banner to list a bike
+        Card(
+          color: isDark ? AppColors.zinc900 : AppColors.zinc100,
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: [
+                const Icon(Icons.two_wheeler, size: 28),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Have a bicycle or scooter?', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+                      Text('Rent it to trusted students when not in use.', style: TextStyle(fontSize: 11, color: AppColors.zinc500)),
+                    ],
+                  ),
+                ),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(90, 34),
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                  ),
+                  onPressed: _showListBikeDialog,
+                  icon: const Icon(Icons.add, size: 14),
+                  label: const Text('List Bike', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                ),
+              ],
             ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        if (_bikes.isEmpty)
+          EmptyStateView(
+            icon: Icons.pedal_bike,
+            title: 'No Bikes Listed for Rent',
+            message: 'No cycles or scooters are currently listed in your campus. Be the first to list one!',
+            actionLabel: 'List Your Bike',
+            onAction: _showListBikeDialog,
           )
         else
           ..._bikes.map(
-            (b) => Card(
-              margin: const EdgeInsets.only(bottom: 12),
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.pedal_bike, size: 22),
-                            const SizedBox(width: 10),
-                            Text(
-                              b.model,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                            ),
-                          ],
-                        ),
-                        Text(
-                          'Rs. ${b.dailyRate} / day',
-                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '${b.location} • ${b.condition}',
-                      style: const TextStyle(fontSize: 11, color: AppColors.zinc500),
-                    ),
-                    Text(
-                      'Timing: ${b.availableTime} (${b.availableDate})',
-                      style: const TextStyle(fontSize: 11, color: AppColors.zinc500),
-                    ),
-                    const Divider(height: 18),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Deposit: Rs. ${b.depositAmount}',
-                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
-                        ),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            minimumSize: const Size(80, 32),
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                          ),
-                          onPressed: () {
-                            showDialog(
-                              context: context,
-                              builder: (ctx) => AlertDialog(
-                                title: Text('Rent ${b.model}?'),
-                                content: Text('Location: ${b.location}\nRate: Rs. ${b.dailyRate}/day\n\n${b.rules}'),
-                                actions: [
-                                  TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      Navigator.pop(ctx);
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text('Cycle unlocked! Lock PIN: 4821')),
-                                      );
-                                    },
-                                    child: const Text('Confirm Rental'),
-                                  ),
-                                ],
+            (b) {
+              final user = AuthState.instance.user;
+              final isOwner = user != null && b.ownerName != null &&
+                  b.ownerName!.trim().toLowerCase() == user.name.trim().toLowerCase();
+
+              return Card(
+                margin: const EdgeInsets.only(bottom: 12),
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.pedal_bike, size: 22),
+                              const SizedBox(width: 10),
+                              Text(
+                                b.model,
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                               ),
-                            );
-                          },
-                          child: const Text('Rent Bike', style: TextStyle(fontSize: 11)),
+                            ],
+                          ),
+                          Text(
+                            'Rs. ${b.dailyRate} / day',
+                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '${b.location} • ${b.condition}',
+                        style: const TextStyle(fontSize: 11, color: AppColors.zinc500),
+                      ),
+                      Text(
+                        'Timing: ${b.availableTime} (${b.availableDate})',
+                        style: const TextStyle(fontSize: 11, color: AppColors.zinc500),
+                      ),
+                      if (b.rules.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          'Terms: ${b.rules}',
+                          style: const TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: AppColors.zinc500),
                         ),
                       ],
-                    ),
-                  ],
+                      const Divider(height: 16),
+                      // Owner & actions
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          InkWell(
+                            onTap: () {
+                              if (b.ownerName != null) {
+                                PublicProfileDialog.show(
+                                  context,
+                                  userId: b.ownerName!,
+                                  fallbackName: b.ownerName!,
+                                );
+                              }
+                            },
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 10,
+                                  backgroundColor: isDark ? AppColors.zinc800 : AppColors.zinc300,
+                                  child: Text(
+                                    (b.ownerName != null && b.ownerName!.isNotEmpty) ? b.ownerName![0].toUpperCase() : 'O',
+                                    style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  b.ownerName ?? 'Student Owner',
+                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(width: 4),
+                                const Icon(Icons.open_in_new, size: 11, color: AppColors.zinc500),
+                              ],
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              if (!isOwner) ...[
+                                TextButton(
+                                  onPressed: () {
+                                    ReviewModal.show(
+                                      context,
+                                      targetUserId: b.ownerName ?? 'Owner',
+                                      targetName: b.ownerName ?? 'Bike Owner',
+                                      category: 'rental',
+                                    );
+                                  },
+                                  child: const Text('Rate Owner', style: TextStyle(fontSize: 11)),
+                                ),
+                                const SizedBox(width: 4),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    minimumSize: const Size(80, 32),
+                                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  ),
+                                  onPressed: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (ctx) => AlertDialog(
+                                        title: Text('Rent ${b.model}?'),
+                                        content: Text(
+                                          'Location: ${b.location}\nDaily Rate: Rs. ${b.dailyRate}\nSecurity Deposit: Rs. ${b.depositAmount}\n\nTerms: ${b.rules}\n\nNote: Handover and payments are coordinated directly with the student owner upon meetup.',
+                                        ),
+                                        actions: [
+                                          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+                                          ElevatedButton(
+                                            onPressed: () async {
+                                              Navigator.pop(ctx);
+                                              final success = await CommuteService.rentBike(
+                                                bikeId: b.id,
+                                                renterName: user?.name ?? 'Student',
+                                                renterId: user?.userId,
+                                              );
+                                              if (mounted) {
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(success
+                                                        ? 'Rental request sent to ${b.ownerName}! Coordinate handover directly.'
+                                                        : 'Could not send request. Please try again.'),
+                                                    backgroundColor: success ? AppColors.success : AppColors.error,
+                                                  ),
+                                                );
+                                                _loadAllData();
+                                              }
+                                            },
+                                            child: const Text('Confirm Request'),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                  child: const Text('Rent Bike', style: TextStyle(fontSize: 11)),
+                                ),
+                              ] else ...[
+                                IconButton(
+                                  icon: const Icon(Icons.delete_outline, size: 18, color: AppColors.error),
+                                  tooltip: 'Delete Listing',
+                                  onPressed: () async {
+                                    final confirm = await showDialog<bool>(
+                                      context: context,
+                                      builder: (dCtx) => AlertDialog(
+                                        title: const Text('Delete Bike Listing?'),
+                                        content: const Text('Are you sure you want to remove your bicycle from the campus rental board?'),
+                                        actions: [
+                                          TextButton(onPressed: () => Navigator.pop(dCtx, false), child: const Text('Cancel')),
+                                          ElevatedButton(
+                                            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+                                            onPressed: () => Navigator.pop(dCtx, true),
+                                            child: const Text('Delete'),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                    if (confirm == true) {
+                                      final deleted = await CommuteService.deleteBike(b.id);
+                                      if (deleted && mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('Bike listing removed.')),
+                                        );
+                                        _loadAllData();
+                                      }
+                                    }
+                                  },
+                                ),
+                              ],
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ),
+              );
+            },
           ),
       ],
     );
@@ -1235,28 +1514,12 @@ class _CommuteScreenState extends State<CommuteScreen> with SingleTickerProvider
       padding: const EdgeInsets.all(16),
       children: [
         if (_bookings.isEmpty)
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 36),
-              child: Column(
-                children: [
-                  const Icon(Icons.confirmation_number_outlined, size: 40, color: AppColors.zinc500),
-                  const SizedBox(height: 12),
-                  const Text('No Active Ride Bookings', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'You haven’t booked any commute rides yet. Check the Available Rides tab to join an existing carpool or rickshaw split.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 12, color: AppColors.zinc500),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => _tabController.animateTo(0),
-                    child: const Text('Browse Available Rides'),
-                  ),
-                ],
-              ),
-            ),
+          EmptyStateView(
+            icon: Icons.confirmation_number_outlined,
+            title: 'No Active Ride Bookings',
+            message: 'You haven’t booked any commute rides yet. Check the Available Rides tab to join an existing carpool or rickshaw split.',
+            actionLabel: 'Browse Available Rides',
+            onAction: () => _tabController.animateTo(0),
           )
         else
           ..._bookings.map(
@@ -1297,9 +1560,24 @@ class _CommuteScreenState extends State<CommuteScreen> with SingleTickerProvider
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      'Organizer: ${booking.organizerName} • ${booking.vehicleType.toUpperCase()}',
-                      style: const TextStyle(fontSize: 11, color: AppColors.zinc500),
+                    InkWell(
+                      onTap: () {
+                        PublicProfileDialog.show(
+                          context,
+                          userId: booking.organizerName,
+                          fallbackName: booking.organizerName,
+                        );
+                      },
+                      child: Row(
+                        children: [
+                          Text(
+                            'Organizer: ${booking.organizerName} • ${booking.vehicleType.toUpperCase()}',
+                            style: const TextStyle(fontSize: 11, color: AppColors.zinc500),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(Icons.open_in_new, size: 11, color: AppColors.zinc500),
+                        ],
+                      ),
                     ),
                     const Divider(height: 18),
                     Row(
@@ -1309,13 +1587,40 @@ class _CommuteScreenState extends State<CommuteScreen> with SingleTickerProvider
                           'Cost Share: Rs. ${booking.pricePerSeat}',
                           style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
                         ),
-                        TextButton(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Contacting ${booking.organizerName}...')),
-                            );
-                          },
-                          child: const Text('Message Driver', style: TextStyle(fontSize: 12)),
+                        Row(
+                          children: [
+                            OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                minimumSize: const Size(0, 32),
+                              ),
+                              onPressed: () {
+                                ReviewModal.show(
+                                  context,
+                                  targetUserId: booking.organizerName,
+                                  targetName: booking.organizerName,
+                                  category: 'commute',
+                                );
+                              },
+                              icon: const Icon(Icons.star_outline, size: 14),
+                              label: const Text('Rate Driver', style: TextStyle(fontSize: 11)),
+                            ),
+                            const SizedBox(width: 6),
+                            ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                minimumSize: const Size(0, 32),
+                              ),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => const MessagesScreen()),
+                                );
+                              },
+                              icon: const Icon(Icons.chat_outlined, size: 14),
+                              label: const Text('Chat', style: TextStyle(fontSize: 11)),
+                            ),
+                          ],
                         ),
                       ],
                     ),

@@ -2,39 +2,34 @@
 
 
 > **Next.js Web Repository**: [https://github.com/HammadIsmail/campus-stitch](https://github.com/HammadIsmail/campus-stitch)  
-**CampuStitch Mobile** is a cross-platform Flutter application (Android & iOS) designed for verified university students across Pakistan. It provides a native mobile experience for daily rickshaw/carpool splits, peer bike rentals, student-to-student marketplace, hostel living, Reddit-style campus community feed, and real-time push notifications.
+**CampuStitch Mobile** is a cross-platform Flutter application (Android & iOS) designed for verified university students across Pakistan. It provides a native mobile experience for daily rickshaw/carpool splits, peer bike rentals, student-to-student marketplace, hostel living, student services, and real-time push notifications.
 
 ---
 
 ## 🚀 Key Mobile Features
 
-### 1. 🔔 Native Push Notifications (Firebase Cloud Messaging)
+### 1. 🏢 Hostel Hub (`HostelScreen` - Primary Tab 1)
+- **Roommate Vacancies:** Clean directory of verified student roommate listings across campus hostel blocks (published via web portal).
+- **Student Services & Gigs:** Door-to-door campus services (laundry pickup, cooler maintenance, printing delivery) with direct provider contact.
+- **Offer Campus Service:** Fast form with preset categories for student service providers.
+
+### 2. 🚗 Commute & Carpooling (`CommuteScreen`)
+- **Rickshaw & Carpool Splits:** Daily routes (e.g. Khurrianwala ⇄ Campus) splitting travel costs evenly among students.
+- **Fair-Share Splitter:** Live recalculation of per-student costs as seats are booked.
+- **Peer Bike Rentals:** Hourly and daily bike rentals with student ID verification.
+
+### 3. 🛍️ Student Marketplace (`MarketScreen`)
+- **Hyperlocal Campus Market:** Textbooks, lab equipment, cooler repairs, calculators, and furniture.
+- **Pass-Out Room Bundles:** Graduating seniors bundle full room setups for incoming freshmen.
+
+### 4. 🔔 Native Push Notifications (Firebase Cloud Messaging)
 - **Firebase Messaging (`firebase_messaging`):** Native push reception for Android and iOS.
 - **Local Heads-Up Notifications (`flutter_local_notifications`):** Displays alerts with high-priority banners when the app is in the foreground.
 - **Background Handlers (`_firebaseMessagingBackgroundHandler`):** Handles background and terminated push events.
 - **Automatic Token Synchronization:** Device tokens are automatically registered with the Next.js backend (`POST /api/notifications/token`) upon login.
 
-### 2. 👥 Campus Feed with Infinite Scroll (`CommunityScreen`)
-- **Initial Batch of 3 Posts:** Loads only the first 3 posts upon opening for instant loading.
-- **ScrollController Infinite Scroll:** Dynamically loads the next 3 posts as the user scrolls near the bottom of the list.
-- **Upvoting & Downvoting:** Optimistic score feedback with server sync.
-- **Subreddit Filtering:** Switch between `All Feeds`, `r/general`, `r/exams`, `r/commute-splits`, and `r/cs-uet`.
-
-### 3. 🚗 Commute & Carpooling (`CommuteScreen`)
-- **Rickshaw Cost Splits:** Fixed daily routes (e.g. Khurrianwala ⇄ UET Lahore) splitting fares evenly among students.
-- **Fair-Share Splitter:** Live recalculation of per-student costs as seats are booked.
-- **Peer Bike Rentals:** Hourly and daily bike rentals with student ID verification.
-
-### 4. 🛍️ Student Marketplace (`MarketScreen`)
-- **Hyperlocal Campus Market:** Textbooks, lab equipment, cooler repairs, calculators, and furniture.
-- **Pass-Out Room Bundles:** Graduating seniors bundle full room setups for incoming freshmen.
-
-### 5. 🏢 Hostel Hub (`HostelScreen`)
-- **Roommate Vacancies:** Listings for shared rooms, attached washrooms, and hostel vacancies across university blocks.
-- **Student Services:** Door-to-door campus services (laundry pickup, electricians, past paper delivery).
-
-### 6. 🛡️ Student Identity Verification (`VerificationScreen`)
-- **Student KYC Submission:** Pure student-facing flow to upload live selfie and university student ID card.
+### 5. 🛡️ Student Identity Verification (`VerificationScreen`)
+- **Student Verification Submission:** Pure student-facing flow to upload live selfie and university student ID card.
 - **Web-Only Administration:** Note that CampuStitch mobile has NO admin or super-admin screens/APIs. All administrative operations (KYC document verification, campus administration, super admin management) are handled exclusively on the Web portal (`/admin` and `/admin/super`).
 
 ---

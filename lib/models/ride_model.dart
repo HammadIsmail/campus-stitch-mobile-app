@@ -206,6 +206,8 @@ class BikeModel {
   final String rules;
   final bool isAvailable;
   final String? campusId;
+  final String? ownerName;
+  final String? imageUrl;
 
   BikeModel({
     required this.id,
@@ -219,6 +221,8 @@ class BikeModel {
     this.rules = 'Valid student card required for checkout.',
     this.isAvailable = true,
     this.campusId,
+    this.ownerName,
+    this.imageUrl,
   });
 
   factory BikeModel.fromJson(Map<String, dynamic> json) {
@@ -238,6 +242,8 @@ class BikeModel {
       rules: json['rules']?.toString() ?? 'Valid student ID required.',
       isAvailable: json['is_available'] == true || json['isAvailable'] == true,
       campusId: json['campus_id']?.toString() ?? json['campusId']?.toString(),
+      ownerName: json['owner_name']?.toString() ?? json['ownerName']?.toString() ?? 'Student Owner',
+      imageUrl: json['image_url']?.toString() ?? json['imageUrl']?.toString(),
     );
   }
 
@@ -254,6 +260,8 @@ class BikeModel {
       'rules': rules,
       'is_available': isAvailable,
       'campus_id': campusId,
+      'owner_name': ownerName,
+      'image_url': imageUrl,
     };
   }
 }

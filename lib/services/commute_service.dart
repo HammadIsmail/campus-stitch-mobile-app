@@ -197,6 +197,51 @@ class CommuteService {
     }
   }
 
+  /// Lists a student bike for rent
+  static Future<BikeModel?> listBike({
+    required String model,
+    required int dailyRate,
+    int depositAmount = 500,
+    required String location,
+    String condition = 'Good condition',
+    String rules = 'Return before 10 PM. Valid student ID required.',
+    required String ownerName,
+    required String campusId,
+    String? imageUrl,
+  }) async {
+    try {
+      final res = await ApiClient.post(
+        ApiConstants.commuteBikes,
+        body: {
+          'model': model.trim(),
+          'dailyRate': dailyRate,
+          'depositAmount': depositAmount,
+          'location': location.trim(),
+          'condition': condition,
+          'rules': rules.trim(),
+          'ownerName': ownerName.trim(),
+          'campusId': campusId,
+          if (imageUrl != null && imageUrl.isNotEmpty) 'imageUrl': imageUrl,
+        },
+      );
+
+      if (res.success && res.data is Map && (res.data as Map)['bike'] != null) {
+        return BikeModel.fromJson(Map<String, dynamic>.from((res.data as Map)['bike']));
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  /// Deletes a bike rental listing
+  static Future<bool> deleteBike(String id) async {
+    try {
+      final res = await ApiClient.delete('${ApiConstants.commuteBikes}?id=$id');
+      return res.success;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// Updates ride details or status
   static Future<bool> updateRide({
     required String id,
