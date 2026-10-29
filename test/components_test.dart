@@ -1,42 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mobile/widgets/verified_student_badge.dart';
 import 'package:mobile/widgets/empty_state_view.dart';
 
 void main() {
-  group('VerifiedStudentBadge tests', () {
-    testWidgets('renders badge icon and label when isVerified is true', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: VerifiedStudentBadge(
-              isVerified: true,
-              showLabel: true,
-            ),
-          ),
-        ),
-      );
-
-      expect(find.byIcon(Icons.verified), findsOneWidget);
-      expect(find.text('Verified Student'), findsOneWidget);
-    });
-
-    testWidgets('renders nothing (SizedBox.shrink) when isVerified is false', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: VerifiedStudentBadge(
-              isVerified: false,
-              showLabel: true,
-            ),
-          ),
-        ),
-      );
-
-      expect(find.byIcon(Icons.verified), findsNothing);
-      expect(find.text('Verified Student'), findsNothing);
-    });
-  });
 
   group('EmptyStateView tests', () {
     testWidgets('renders title, description, and action button properly', (WidgetTester tester) async {

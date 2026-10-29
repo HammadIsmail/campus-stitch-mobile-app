@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../core/api/api_client.dart';
 import '../core/api/api_constants.dart';
 import '../core/theme/app_theme.dart';
-import 'verified_student_badge.dart';
 
 class PublicProfileDialog extends StatefulWidget {
   final String userId;
@@ -203,10 +202,6 @@ class _PublicProfileDialogState extends State<PublicProfileDialog> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            if (isVerified) ...[
-                              const SizedBox(width: 6),
-                              const VerifiedStudentBadge(isVerified: true, iconSize: 16),
-                            ],
                           ],
                         ),
                         const SizedBox(height: 3),

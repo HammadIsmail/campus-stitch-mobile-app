@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/state/auth_state.dart';
 import '../../core/theme/app_theme.dart';
+import '../../services/assistant_service.dart';
 
 class VoiceSuggestion {
   final String urdu;
@@ -76,7 +77,7 @@ class _VoiceSearchScreenState extends State<VoiceSearchScreen> with SingleTicker
     super.dispose();
   }
 
-  void _simulateVoiceInput(String text) {
+  Future<void> _simulateVoiceInput(String text) async {
     setState(() {
       _isListening = true;
       _currentQuery = text;
@@ -85,48 +86,50 @@ class _VoiceSearchScreenState extends State<VoiceSearchScreen> with SingleTicker
       _resultData = null;
     });
 
-    Future.delayed(const Duration(milliseconds: 1500), () {
-      if (!mounted) return;
-      setState(() {
-        _isListening = false;
+    final res = await AssistantService.askAssistant(text);
+    if (!mounted) return;
 
-        final lower = text.toLowerCase();
-        if (lower.contains('کھڑیاںوالہ') || lower.contains('khurrialwala') || lower.contains('ride') || lower.contains('carpool')) {
-          _aiResponse = 'مجھے آپ کے کیمپس کے لیے کھڑیاںوالہ کی تصدیق شدہ کارپول مل گئی ہے۔ احمد رضا کی ٹویوٹا کرولا صبح 8:00 بجے روانہ ہوگی۔';
-          _resultType = 'ride';
+    setState(() {
+      _isListening = false;
+      if (res != null) {
+        _aiResponse = res.reply;
+        _resultType = res.optionsType ?? 'general';
+        if (res.rides.isNotEmpty) {
+          final first = res.rides.first;
           _resultData = {
-            'title': 'Khurrialwala Morning Ride (8:00 AM)',
-            'driver': 'Ahmed Raza (Verified)',
-            'car': 'Toyota Corolla • 3 seats left',
-            'fare': 'Rs. 250 / seat',
+            'title': '${first['from_location']} → ${first['to_location']}',
+            'driver': '${first['organizer_name']} (Verified)',
+            'car': '${first['departure_time']} • ${first['available_seats']} seats left',
+            'fare': 'Rs. ${first['price_per_seat']} / seat',
           };
-        } else if (lower.contains('service') || lower.contains('سروس') || lower.contains('laundry') || lower.contains('لانڈری')) {
-          _aiResponse = 'ہاسٹل میں تصدیق شدہ سٹوڈنٹ لانڈری اور استری سروس دستیاب ہے۔ ارسلان خان شام 6 بجے روم سے پک اپ کرتے ہیں۔';
-          _resultType = 'service';
+        } else if (res.services.isNotEmpty) {
+          final first = res.services.first;
           _resultData = {
-            'title': 'Express Student Laundry & Ironing',
-            'driver': 'Arslan Khan (Hostel Block A)',
-            'car': 'Rs. 50 / pair • Daily pickup',
-            'fare': 'Available 6:00 PM - 10:00 PM',
+            'title': first['name'] ?? 'Campus Service',
+            'driver': '${first['provider']} (${first['location'] ?? 'Campus'})',
+            'car': first['schedule'] ?? 'Daily',
+            'fare': first['rate'] ?? 'Negotiable',
           };
-        } else if (lower.contains('کولر') || lower.contains('cooler') || lower.contains('book') || lower.contains('market')) {
-          _aiResponse = 'ہاسٹل اور مارکیٹ پلیس میں سیمی کنڈکٹر فون کولر دستیاب ہے۔ قیمت 1,800 روپے ہے۔';
-          _resultType = 'market';
+        } else if (res.listings.isNotEmpty) {
+          final first = res.listings.first;
           _resultData = {
-            'title': 'Semiconductor Phone Cooler for Gaming & Lab',
-            'seller': 'Zain Ali (Hostel Block C)',
-            'price': 'Rs. 1,800',
-            'condition': 'Like new • Magnetic clamp',
+            'title': first['title'] ?? 'Market Item',
+            'seller': '${first['seller_name']} (Verified)',
+            'price': 'Rs. ${first['price']}',
+            'condition': first['condition'] ?? 'Good condition',
           };
-        } else {
-          _aiResponse = 'آپ کی درخواست کیمپس ڈیٹا بیس میں تلاش کر لی گئی ہے۔ آپ کیمپس ماڈیولز سے مطلوبہ معلومات دیکھ سکتے ہیں۔';
-          _resultType = 'general';
+        } else if (res.bikes.isNotEmpty) {
+          final first = res.bikes.first;
           _resultData = {
-            'title': 'Campus Record Match',
-            'status': 'Found campus records for ${AuthState.instance.activeCampusName}',
+            'title': first['model'] ?? 'Campus Bike',
+            'driver': '${first['owner_name']} (Verified)',
+            'car': 'Campus daily rental',
+            'fare': 'Rs. ${first['daily_rate']} / day',
           };
         }
-      });
+      } else {
+        _aiResponse = 'کیمپس ریکارڈز میں معلومات تلاش کی گئیں۔';
+      }
     });
   }
 

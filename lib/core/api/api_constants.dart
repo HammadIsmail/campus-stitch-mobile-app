@@ -26,9 +26,6 @@ class ApiConstants {
   static String get universities => '$baseUrl/api/universities';
   static String get campuses => '$baseUrl/api/campuses';
 
-  // Campus Admin Verification Endpoint
-  static String get verifications => '$baseUrl/api/verifications';
-
   // Domain Feature Endpoints
   static String get communityPosts => '$baseUrl/api/community/posts';
   static String get communityVote => '$baseUrl/api/community/posts/vote';
@@ -53,6 +50,9 @@ class ApiConstants {
   // Campus Services Endpoints
   static String get campusServices => '$baseUrl/api/services';
   static String get hostelServices => campusServices;
+
+  // AI Assistant & Search
+  static String get assistantChat => '$baseUrl/api/assistant/chat';
 
   // Image & File Upload
   static String get upload => '$baseUrl/api/upload';

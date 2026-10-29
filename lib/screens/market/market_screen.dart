@@ -10,8 +10,8 @@ import '../../services/market_service.dart';
 import '../../widgets/empty_state_view.dart';
 import '../../widgets/public_profile_dialog.dart';
 import '../../widgets/review_modal.dart';
-import '../../widgets/verified_student_badge.dart';
 import '../messages/messages_screen.dart';
+import '../search/campus_search_screen.dart';
 
 class MarketScreen extends StatefulWidget {
   const MarketScreen({super.key});
@@ -882,10 +882,6 @@ class _MarketScreenState extends State<MarketScreen> {
                     const Icon(Icons.person_outline, size: 16),
                     const SizedBox(width: 6),
                     Text(item.sellerName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                    if (item.isVerified) ...[
-                      const SizedBox(width: 4),
-                      const VerifiedStudentBadge(size: 14),
-                    ],
                     const SizedBox(width: 4),
                     const Icon(Icons.open_in_new, size: 12, color: AppColors.zinc500),
                   ],
@@ -976,6 +972,13 @@ class _MarketScreenState extends State<MarketScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            tooltip: 'Search Campus AI',
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const CampusSearchScreen()));
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.add_shopping_cart),
             tooltip: 'Sell Item',
@@ -1138,8 +1141,6 @@ class _MarketScreenState extends State<MarketScreen> {
                                                   style: const TextStyle(fontSize: 10, color: AppColors.zinc500),
                                                 ),
                                               ),
-                                              if (item.isVerified)
-                                                const VerifiedStudentBadge(size: 12),
                                             ],
                                           ),
                                         ),

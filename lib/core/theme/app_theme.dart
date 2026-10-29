@@ -21,6 +21,8 @@ class AppColors {
 
   // Status & Role Accents
   static const Color success = Color(0xFF10B981);
+  static const Color emerald500 = Color(0xFF10B981);
+  static const Color zinc950 = Color(0xFF09090B);
   static const Color warning = Color(0xFFF59E0B);
   static const Color error = Color(0xFFEF4444);
   static const Color superAdmin = Color(0xFFA855F7);

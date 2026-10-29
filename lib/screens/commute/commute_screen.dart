@@ -6,8 +6,8 @@ import '../../services/commute_service.dart';
 import '../../widgets/empty_state_view.dart';
 import '../../widgets/public_profile_dialog.dart';
 import '../../widgets/review_modal.dart';
-import '../../widgets/verified_student_badge.dart';
 import '../messages/messages_screen.dart';
+import '../search/campus_search_screen.dart';
 
 class CommuteScreen extends StatefulWidget {
   const CommuteScreen({super.key});
@@ -556,6 +556,7 @@ class _CommuteScreenState extends State<CommuteScreen> with SingleTickerProvider
                           final createdRide = await CommuteService.createRide(
                             campusId: campusId,
                             universityId: universityId,
+                            organizerId: user?.userId,
                             organizerName: organizerName,
                             fromLocation: fromText,
                             toLocation: toText,
@@ -637,10 +638,6 @@ class _CommuteScreenState extends State<CommuteScreen> with SingleTickerProvider
                           ride.organizerName,
                           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                         ),
-                        if (ride.organizerVerified) ...[
-                          const SizedBox(width: 6),
-                          const VerifiedStudentBadge(size: 16),
-                        ],
                         const SizedBox(width: 4),
                         const Icon(Icons.open_in_new, size: 12, color: AppColors.zinc500),
                       ],
@@ -705,8 +702,12 @@ class _CommuteScreenState extends State<CommuteScreen> with SingleTickerProvider
                 final currentUserName = (user != null && user.name.isNotEmpty)
                     ? user.name.trim().toLowerCase()
                     : '';
-                final isMine = currentUserName.isNotEmpty &&
-                    ride.organizerName.trim().toLowerCase() == currentUserName;
+                final isMine = (currentUserName.isNotEmpty &&
+                        ride.organizerName.trim().toLowerCase() == currentUserName) ||
+                    (user != null &&
+                        user.userId.isNotEmpty &&
+                        ride.organizerId != null &&
+                        ride.organizerId == user.userId);
 
                 if (isMine) {
                   return Row(
@@ -793,6 +794,13 @@ class _CommuteScreenState extends State<CommuteScreen> with SingleTickerProvider
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.search, size: 24),
+            tooltip: 'Search Campus AI',
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const CampusSearchScreen()));
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.add_circle_outline, size: 24),
             tooltip: 'Offer a Ride',
             onPressed: _offerRide,
@@ -839,36 +847,40 @@ class _CommuteScreenState extends State<CommuteScreen> with SingleTickerProvider
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Filter Chips (All, Rickshaw, Bike, Car)
-          Row(
-            children: [
-              ChoiceChip(
-                label: const Text('All Vehicles', style: TextStyle(fontSize: 11)),
-                selected: _selectedVehicleFilter == 'all',
-                onSelected: (val) => setState(() => _selectedVehicleFilter = 'all'),
-              ),
-              const SizedBox(width: 6),
-              ChoiceChip(
-                avatar: const Icon(Icons.electric_rickshaw, size: 14),
-                label: const Text('Rickshaw', style: TextStyle(fontSize: 11)),
-                selected: _selectedVehicleFilter == 'rickshaw',
-                onSelected: (val) => setState(() => _selectedVehicleFilter = 'rickshaw'),
-              ),
-              const SizedBox(width: 6),
-              ChoiceChip(
-                avatar: const Icon(Icons.directions_car, size: 14),
-                label: const Text('Car', style: TextStyle(fontSize: 11)),
-                selected: _selectedVehicleFilter == 'car',
-                onSelected: (val) => setState(() => _selectedVehicleFilter = 'car'),
-              ),
-              const SizedBox(width: 6),
-              ChoiceChip(
-                avatar: const Icon(Icons.two_wheeler, size: 14),
-                label: const Text('Bike', style: TextStyle(fontSize: 11)),
-                selected: _selectedVehicleFilter == 'bike',
-                onSelected: (val) => setState(() => _selectedVehicleFilter = 'bike'),
-              ),
-            ],
+          // Filter Chips (All, Rickshaw, Bike, Car) - Horizontally Scrollable
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: [
+                ChoiceChip(
+                  label: const Text('All Vehicles', style: TextStyle(fontSize: 11)),
+                  selected: _selectedVehicleFilter == 'all',
+                  onSelected: (val) => setState(() => _selectedVehicleFilter = 'all'),
+                ),
+                const SizedBox(width: 6),
+                ChoiceChip(
+                  avatar: const Icon(Icons.electric_rickshaw, size: 14),
+                  label: const Text('Rickshaw', style: TextStyle(fontSize: 11)),
+                  selected: _selectedVehicleFilter == 'rickshaw',
+                  onSelected: (val) => setState(() => _selectedVehicleFilter = 'rickshaw'),
+                ),
+                const SizedBox(width: 6),
+                ChoiceChip(
+                  avatar: const Icon(Icons.directions_car, size: 14),
+                  label: const Text('Car', style: TextStyle(fontSize: 11)),
+                  selected: _selectedVehicleFilter == 'car',
+                  onSelected: (val) => setState(() => _selectedVehicleFilter = 'car'),
+                ),
+                const SizedBox(width: 6),
+                ChoiceChip(
+                  avatar: const Icon(Icons.two_wheeler, size: 14),
+                  label: const Text('Bike', style: TextStyle(fontSize: 11)),
+                  selected: _selectedVehicleFilter == 'bike',
+                  onSelected: (val) => setState(() => _selectedVehicleFilter = 'bike'),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 10),
 
@@ -1032,109 +1044,125 @@ class _CommuteScreenState extends State<CommuteScreen> with SingleTickerProvider
               ),
               const Divider(height: 20),
 
-              // Bottom row: Driver & Seats & Book action
+              // Bottom row: Driver & Seats & Book / Edit / Delete action
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  InkWell(
-                    onTap: () {
-                      PublicProfileDialog.show(
-                        context,
-                        userId: ride.organizerName,
-                        fallbackName: ride.organizerName,
-                        fallbackVerified: ride.organizerVerified,
-                      );
-                    },
-                    borderRadius: BorderRadius.circular(8),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 12,
-                          backgroundColor: isDark ? AppColors.white : AppColors.black,
-                          child: Text(
-                            ride.organizerName.isNotEmpty ? ride.organizerName[0].toUpperCase() : 'S',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: isDark ? AppColors.black : AppColors.white,
+                  Expanded(
+                    child: InkWell(
+                      onTap: () {
+                        PublicProfileDialog.show(
+                          context,
+                          userId: ride.organizerName,
+                          fallbackName: ride.organizerName,
+                          fallbackVerified: ride.organizerVerified,
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(8),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircleAvatar(
+                            radius: 12,
+                            backgroundColor: isDark ? AppColors.white : AppColors.black,
+                            child: Text(
+                              ride.organizerName.isNotEmpty ? ride.organizerName[0].toUpperCase() : 'S',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: isDark ? AppColors.black : AppColors.white,
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          ride.organizerName,
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                        ),
-                        if (ride.organizerVerified) ...[
-                          const SizedBox(width: 4),
-                          const VerifiedStudentBadge(size: 13),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              ride.organizerName,
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          ),
                         ],
-                      ],
+                      ),
                     ),
                   ),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: ride.availableSeats <= 1
-                              ? (isDark ? AppColors.zinc800 : AppColors.zinc200)
-                              : (isDark ? AppColors.white : AppColors.black),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          ride.availableSeats > 0 ? '${ride.availableSeats} seat left' : 'Full',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: ride.availableSeats <= 1
-                                ? (isDark ? AppColors.white : AppColors.black)
-                                : (isDark ? AppColors.black : AppColors.white),
-                          ),
-                        ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: ride.availableSeats <= 1
+                          ? (isDark ? AppColors.zinc800 : AppColors.zinc200)
+                          : (isDark ? AppColors.white : AppColors.black),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      ride.availableSeats > 0 ? '${ride.availableSeats} seat left' : 'Full',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: ride.availableSeats <= 1
+                            ? (isDark ? AppColors.white : AppColors.black)
+                            : (isDark ? AppColors.black : AppColors.white),
                       ),
-                      const SizedBox(width: 8),
-                      Builder(
-                        builder: (context) {
-                          final user = AuthState.instance.user;
-                          final currentUserName = (user != null && user.name.isNotEmpty)
-                              ? user.name.trim().toLowerCase()
-                              : '';
-                          final isMine = currentUserName.isNotEmpty &&
-                              ride.organizerName.trim().toLowerCase() == currentUserName;
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Builder(
+                    builder: (context) {
+                      final user = AuthState.instance.user;
+                      final currentUserName = (user != null && user.name.isNotEmpty)
+                          ? user.name.trim().toLowerCase()
+                          : '';
+                      final isMine = (currentUserName.isNotEmpty &&
+                              ride.organizerName.trim().toLowerCase() == currentUserName) ||
+                          (user != null &&
+                              user.userId.isNotEmpty &&
+                              ride.organizerId != null &&
+                              ride.organizerId == user.userId);
 
-                          if (isMine) {
-                            return Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.edit_outlined, size: 16),
-                                  visualDensity: VisualDensity.compact,
-                                  tooltip: 'Edit Ride',
-                                  onPressed: () => _showEditRideDialog(ride),
+                      if (isMine) {
+                        return Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            InkWell(
+                              onTap: () => _showEditRideDialog(ride),
+                              borderRadius: BorderRadius.circular(6),
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: isDark ? AppColors.zinc800 : AppColors.zinc200,
+                                  borderRadius: BorderRadius.circular(6),
                                 ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete_outline, size: 16, color: AppColors.error),
-                                  visualDensity: VisualDensity.compact,
-                                  tooltip: 'Delete Ride',
-                                  onPressed: () => _confirmDeleteRide(ride),
-                                ),
-                              ],
-                            );
-                          }
-
-                          return ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              minimumSize: const Size(70, 30),
-                              padding: const EdgeInsets.symmetric(horizontal: 10),
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                child: Icon(Icons.edit_outlined, size: 15, color: isDark ? Colors.white : Colors.black),
+                              ),
                             ),
-                            onPressed: ride.availableSeats > 0 ? () => _bookRide(ride) : null,
-                            child: const Text('Book', style: TextStyle(fontSize: 11)),
-                          );
-                        },
-                      ),
-                    ],
+                            const SizedBox(width: 6),
+                            InkWell(
+                              onTap: () => _confirmDeleteRide(ride),
+                              borderRadius: BorderRadius.circular(6),
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: AppColors.error.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Icon(Icons.delete_outline, size: 15, color: AppColors.error),
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+
+                      return ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: const Size(64, 28),
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        onPressed: ride.availableSeats > 0 ? () => _bookRide(ride) : null,
+                        child: const Text('Book', style: TextStyle(fontSize: 11)),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -1375,36 +1403,44 @@ class _CommuteScreenState extends State<CommuteScreen> with SingleTickerProvider
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          InkWell(
-                            onTap: () {
-                              if (b.ownerName != null) {
-                                PublicProfileDialog.show(
-                                  context,
-                                  userId: b.ownerName!,
-                                  fallbackName: b.ownerName!,
-                                );
-                              }
-                            },
-                            child: Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 10,
-                                  backgroundColor: isDark ? AppColors.zinc800 : AppColors.zinc300,
-                                  child: Text(
-                                    (b.ownerName != null && b.ownerName!.isNotEmpty) ? b.ownerName![0].toUpperCase() : 'O',
-                                    style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
+                          Expanded(
+                            child: InkWell(
+                              onTap: () {
+                                if (b.ownerName != null) {
+                                  PublicProfileDialog.show(
+                                    context,
+                                    userId: b.ownerName!,
+                                    fallbackName: b.ownerName!,
+                                  );
+                                }
+                              },
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  CircleAvatar(
+                                    radius: 10,
+                                    backgroundColor: isDark ? AppColors.zinc800 : AppColors.zinc300,
+                                    child: Text(
+                                      (b.ownerName != null && b.ownerName!.isNotEmpty) ? b.ownerName![0].toUpperCase() : 'O',
+                                      style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  b.ownerName ?? 'Student Owner',
-                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                                ),
-                                const SizedBox(width: 4),
-                                const Icon(Icons.open_in_new, size: 11, color: AppColors.zinc500),
-                              ],
+                                  const SizedBox(width: 6),
+                                  Flexible(
+                                    child: Text(
+                                      b.ownerName ?? 'Student Owner',
+                                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Icon(Icons.open_in_new, size: 11, color: AppColors.zinc500),
+                                ],
+                              ),
                             ),
                           ),
+                          const SizedBox(width: 8),
                           Row(
                             children: [
                               if (!isOwner) ...[

@@ -62,6 +62,7 @@ class CommuteService {
   static Future<RideModel> createRide({
     required String campusId,
     required String universityId,
+    String? organizerId,
     required String organizerName,
     required String fromLocation,
     required String toLocation,
@@ -79,6 +80,7 @@ class CommuteService {
       id: 'r_${DateTime.now().millisecondsSinceEpoch}',
       campusId: campusId,
       universityId: universityId,
+      organizerId: organizerId,
       organizerName: organizerName,
       organizerVerified: true,
       fromLocation: fromLocation.trim(),

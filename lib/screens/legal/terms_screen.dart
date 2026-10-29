@@ -74,9 +74,9 @@ class TermsScreen extends StatelessWidget {
             _buildSection(
               context,
               number: '2',
-              title: 'Student Identity Verification & Campus Affiliation',
+              title: 'Eligibility & Campus Affiliation',
               content:
-                  'CampuStitch is restricted to authentic, verified university students, faculty, and campus staff in Pakistan. All users are required to undergo student verification by providing a clear photograph of their official campus identification card and a live camera face selfie. Submitting forged, borrowed, or altered credentials results in an immediate permanent ban and referral to campus authorities.',
+                  'CampuStitch is restricted to students, faculty, and campus staff of higher education institutions in Pakistan. Users agree to provide accurate university, campus, and department registration details. Creating fraudulent accounts or impersonating others results in an immediate permanent ban and referral to campus authorities.',
             ),
 
             _buildSection(

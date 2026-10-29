@@ -110,7 +110,7 @@ class PrivacyScreen extends StatelessWidget {
               number: '2',
               title: 'Personal Information We Collect',
               content:
-                  'We collect only what is strictly necessary to run the campus platform:\n• Student Profile: Name, university email, roll number, department, university and campus affiliation.\n• Identity Verification Data: Photograph of your student ID card and a live camera snapshot (selfie) for facial verification.\n• Module Activity: Ride requests/offers, marketplace listings, campus services, and peer-to-peer messages.',
+                  'We collect only what is strictly necessary to run the campus platform:\n• Student Profile: Name, university email, roll number, department, university and campus affiliation.\n• Module Activity: Ride requests/offers, marketplace listings, campus services, and peer-to-peer messages.',
             ),
 
             _buildSection(
@@ -118,7 +118,7 @@ class PrivacyScreen extends StatelessWidget {
               number: '3',
               title: 'Device Permissions (Camera & Media)',
               content:
-                  'In compliance with Google Play Developer Policies:\n• Camera Permission (android.permission.CAMERA): Required solely for capturing a live selfie during student identity verification and taking item pictures for marketplace listings.\n• Storage/Media Access: Required solely to allow picking student card photos or item photos from your gallery.\nPermissions are never utilized in the background without explicit user action.',
+                  'In compliance with Google Play Developer Policies:\n• Camera Permission (android.permission.CAMERA): Required solely for photographing items for marketplace listings and updating profile pictures.\n• Storage/Media Access: Required solely to allow selecting marketplace item images or profile pictures from your photo gallery.\nPermissions are never utilized in the background without explicit user action.',
             ),
 
             _buildSection(
@@ -134,7 +134,7 @@ class PrivacyScreen extends StatelessWidget {
               number: '5',
               title: 'Third-Party Processors & No Sale Policy',
               content:
-                  'We do NOT sell, rent, or trade student personal data. We utilize trusted sub-processors strictly for infrastructure services:\n• Cloud Database Infrastructure: Encrypted relational data storage.\n• Encrypted Media Storage: Secure image storage for verification documents.',
+                  'We do NOT sell, rent, or trade student personal data. We utilize trusted sub-processors strictly for infrastructure services:\n• Cloud Database Infrastructure: Encrypted relational data storage.\n• Encrypted Media Storage: Secure image storage for marketplace listings and profile avatars.',
             ),
 
             _buildSection(
@@ -142,7 +142,7 @@ class PrivacyScreen extends StatelessWidget {
               number: '6',
               title: 'Account & Data Deletion (Google Play Mandate)',
               content:
-                  'You have the unconditional right to delete your account and all associated personal data permanently:\n• Within App: Profile ➔ Account Settings ➔ Delete Account.\n• Web URL: https://campus-stitch.vercel.app/delete-account.\nUpon request, your credentials, student ID photos, selfie records, listings, and messages are permanently purged from active databases within 30 days.',
+                  'You have the unconditional right to delete your account and all associated personal data permanently:\n• Within App: Profile ➔ Account Settings ➔ Delete Account.\n• Web URL: https://campus-stitch.vercel.app/delete-account.\nUpon request, your credentials, profile data, listings, and messages are permanently purged from active databases within 30 days.',
             ),
 
             _buildSection(

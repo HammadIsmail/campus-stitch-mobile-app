@@ -6,9 +6,9 @@ import '../../services/campus_service.dart';
 import '../../widgets/empty_state_view.dart';
 import '../../widgets/public_profile_dialog.dart';
 import '../../widgets/review_modal.dart';
-import '../../widgets/verified_student_badge.dart';
 import '../messages/messages_screen.dart';
 import '../notifications/notifications_screen.dart';
+import '../search/campus_search_screen.dart';
 
 import 'widgets/edit_service_dialog.dart';
 import 'widgets/offer_service_screen.dart';
@@ -219,12 +219,18 @@ class _ServicesScreenState extends State<ServicesScreen> {
           Row(
             children: [
               IconButton(
-                icon: const Stack(
-                  children: [
-                    Icon(Icons.chat_bubble_outline, size: 20),
-                    Positioned(right: 0, top: 0, child: CircleAvatar(radius: 3, backgroundColor: AppColors.error)),
-                  ],
-                ),
+                icon: const Icon(Icons.search, size: 22),
+                tooltip: 'Search Campus AI',
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const CampusSearchScreen()));
+                },
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              ),
+              const SizedBox(width: 4),
+              IconButton(
+                icon: const Icon(Icons.chat_bubble_outline, size: 20),
+                tooltip: 'Campus Messages',
                 onPressed: () {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const MessagesScreen()));
                 },
@@ -233,12 +239,8 @@ class _ServicesScreenState extends State<ServicesScreen> {
               ),
               const SizedBox(width: 4),
               IconButton(
-                icon: const Stack(
-                  children: [
-                    Icon(Icons.notifications_none, size: 20),
-                    Positioned(right: 0, top: 0, child: CircleAvatar(radius: 3, backgroundColor: AppColors.error)),
-                  ],
-                ),
+                icon: const Icon(Icons.notifications_none, size: 20),
+                tooltip: 'Notifications',
                 onPressed: () {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
                 },
@@ -302,13 +304,14 @@ class _ServicesScreenState extends State<ServicesScreen> {
               ),
               icon: const Icon(Icons.build_outlined, size: 16),
               label: const Text('Offer Campus Service', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-              onPressed: () {
-                Navigator.push(
+              onPressed: () async {
+                await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (_) => OfferServiceScreen(onServiceCreated: _loadData),
                   ),
                 );
+                _loadData();
               },
             ),
           ),
@@ -362,8 +365,6 @@ class _ServicesScreenState extends State<ServicesScreen> {
                   ],
                 ),
               ),
-              if (service.verified)
-                const VerifiedStudentBadge(size: 14),
             ],
           ),
 

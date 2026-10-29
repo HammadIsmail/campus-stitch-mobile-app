@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../widgets/empty_state_view.dart';
 import '../../widgets/public_profile_dialog.dart';
-import '../../widgets/verified_student_badge.dart';
 
 class ChatMessage {
   final String id;
@@ -307,10 +306,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        if (widget.conversation.contactVerified) ...[
-                          const SizedBox(width: 4),
-                          const VerifiedStudentBadge(size: 14),
-                        ],
                         const SizedBox(width: 4),
                         const Icon(Icons.open_in_new, size: 11, color: AppColors.zinc500),
                       ],

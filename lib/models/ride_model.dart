@@ -2,6 +2,7 @@ class RideModel {
   final String id;
   final String? campusId;
   final String? universityId;
+  final String? organizerId;
   final String organizerName;
   final bool organizerVerified;
   final String fromLocation;
@@ -22,6 +23,7 @@ class RideModel {
     required this.id,
     this.campusId,
     this.universityId,
+    this.organizerId,
     required this.organizerName,
     this.organizerVerified = true,
     required this.fromLocation,
@@ -44,6 +46,7 @@ class RideModel {
       id: json['id']?.toString() ?? 'r_${DateTime.now().millisecondsSinceEpoch}',
       campusId: json['campus_id']?.toString() ?? json['campusId']?.toString(),
       universityId: json['university_id']?.toString() ?? json['universityId']?.toString(),
+      organizerId: json['organizer_id']?.toString() ?? json['organizerId']?.toString(),
       organizerName: json['organizer_name']?.toString() ?? json['organizerName']?.toString() ?? 'Student Driver',
       organizerVerified: json['organizer_verified'] == true || json['organizerVerified'] == true,
       fromLocation: json['from_location']?.toString() ?? json['fromLocation']?.toString() ?? 'Campus Area',
@@ -75,6 +78,7 @@ class RideModel {
       'id': id,
       'campus_id': campusId,
       'university_id': universityId,
+      'organizer_id': organizerId,
       'organizer_name': organizerName,
       'organizer_verified': organizerVerified,
       'from_location': fromLocation,
@@ -97,6 +101,7 @@ class RideModel {
     String? id,
     String? campusId,
     String? universityId,
+    String? organizerId,
     String? organizerName,
     bool? organizerVerified,
     String? fromLocation,
@@ -117,6 +122,7 @@ class RideModel {
       id: id ?? this.id,
       campusId: campusId ?? this.campusId,
       universityId: universityId ?? this.universityId,
+      organizerId: organizerId ?? this.organizerId,
       organizerName: organizerName ?? this.organizerName,
       organizerVerified: organizerVerified ?? this.organizerVerified,
       fromLocation: fromLocation ?? this.fromLocation,

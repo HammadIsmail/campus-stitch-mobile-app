@@ -78,69 +78,27 @@ class HomeScreen extends StatelessWidget {
                   );
                 },
               ),
-              // Messages Action with Unread Indicator
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.chat_bubble_outline, size: 20),
-                    tooltip: 'Campus Messages',
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const MessagesScreen()),
-                      );
-                    },
-                  ),
-                  Positioned(
-                    top: 10,
-                    right: 10,
-                    child: Container(
-                      width: 7,
-                      height: 7,
-                      decoration: BoxDecoration(
-                        color: isDark ? AppColors.white : AppColors.black,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: isDark ? AppColors.darkCard : AppColors.white,
-                          width: 1,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+              // Messages Action
+              IconButton(
+                icon: const Icon(Icons.chat_bubble_outline, size: 20),
+                tooltip: 'Campus Messages',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const MessagesScreen()),
+                  );
+                },
               ),
-              // Notifications Action with Unread Badge
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.notifications_none, size: 22),
-                    tooltip: 'Notifications',
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-                      );
-                    },
-                  ),
-                  Positioned(
-                    top: 10,
-                    right: 10,
-                    child: Container(
-                      width: 7,
-                      height: 7,
-                      decoration: BoxDecoration(
-                        color: isDark ? AppColors.white : AppColors.black,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: isDark ? AppColors.darkCard : AppColors.white,
-                          width: 1,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+              // Notifications Action
+              IconButton(
+                icon: const Icon(Icons.notifications_none, size: 22),
+                tooltip: 'Notifications',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                  );
+                },
               ),
               const SizedBox(width: 4),
             ],
