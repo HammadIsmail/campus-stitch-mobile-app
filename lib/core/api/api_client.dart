@@ -139,7 +139,7 @@ class ApiClient {
           lower.contains('exception') ||
           lower.contains('status') ||
           lower.contains('{') ||
-          raw.length > 70) {
+          raw.length > 150) {
         return _statusMessage(statusCode);
       }
     }
@@ -305,8 +305,15 @@ class ApiClient {
       final session = await SessionStore.loadSession();
       if (session != null) {
         final token = session['token'] as String?;
+        final user = session['user'];
         if (token != null && token.isNotEmpty) {
           request.headers['Authorization'] = 'Bearer $token';
+        }
+        if (user != null) {
+          request.headers['x-user-campus-id'] = user.campusId ?? '';
+          request.headers['x-user-university-id'] = user.universityId ?? '';
+          request.headers['x-user-role'] = user.role ?? 'student';
+          request.headers['x-user-name'] = user.name ?? '';
         }
       }
       if (fields != null) {

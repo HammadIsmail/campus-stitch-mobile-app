@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../core/api/api_client.dart';
+import '../../core/constants/app_constants.dart';
+import '../../core/localization/app_strings.dart';
 import '../../core/state/auth_state.dart';
-import '../../core/theme/app_theme.dart';
+import '../../core/theme/app_colors.dart';
 import '../../services/auth_service.dart';
+import '../../widgets/app_button.dart';
+import '../../widgets/app_text_field.dart';
 import '../main_navigation_screen.dart';
 import 'sign_up_screen.dart';
-import '../legal/terms_screen.dart';
-import '../legal/privacy_screen.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -18,9 +20,9 @@ class SignInScreen extends StatefulWidget {
 class _SignInScreenState extends State<SignInScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
+  final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
-  String? _error;
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -30,17 +32,14 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   Future<void> _handleSignIn() async {
+    if (!_formKey.currentState!.validate()) return;
+
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    if (email.isEmpty || password.isEmpty) {
-      setState(() => _error = 'Please enter both your campus email and password');
-      return;
-    }
-
     setState(() {
       _isLoading = true;
-      _error = null;
+      _errorMessage = null;
     });
 
     final success = await AuthState.instance.signIn(email, password);
@@ -54,7 +53,9 @@ class _SignInScreenState extends State<SignInScreen> {
       );
     } else {
       setState(() {
-        _error = ApiClient.humanizeError(AuthState.instance.errorMessage ?? 'Sign in failed. Please check your credentials.');
+        _errorMessage = ApiClient.humanizeError(
+          AuthState.instance.errorMessage ?? 'Sign in failed. Please check your credentials.',
+        );
       });
     }
   }
@@ -68,94 +69,129 @@ class _SignInScreenState extends State<SignInScreen> {
     await showDialog(
       context: context,
       builder: (dialogCtx) {
+        final colors = dialogCtx.colors;
+
         return StatefulBuilder(
           builder: (builderCtx, setDialogState) {
             return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              title: const Text('Reset Password', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+              backgroundColor: colors.surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+              ),
+              title: Text(
+                AppStrings.forgotPassword,
+                style: TextStyle(
+                  fontFamily: 'Plus Jakarta Sans',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: colors.text,
+                ),
+              ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
+                  Text(
                     'Enter your registered campus email and we will dispatch a secure password reset link to your inbox.',
-                    style: TextStyle(fontSize: 13, color: AppColors.zinc500),
+                    style: TextStyle(
+                      fontFamily: 'Plus Jakarta Sans',
+                      fontSize: 13,
+                      height: 1.45,
+                      color: colors.mutedText,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   if (statusMessage != null) ...[
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: (isSuccess ? AppColors.success : AppColors.error).withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
+                        color: isSuccess ? colors.primarySoft : colors.dangerSoft,
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusInput),
                         border: Border.all(
-                          color: (isSuccess ? AppColors.success : AppColors.error).withValues(alpha: 0.3),
+                          color: isSuccess ? colors.primary : colors.danger,
+                          width: 1,
                         ),
                       ),
                       child: Text(
                         statusMessage!,
                         style: TextStyle(
+                          fontFamily: 'Plus Jakarta Sans',
                           fontSize: 12,
-                          color: isSuccess ? AppColors.success : AppColors.error,
+                          color: isSuccess ? colors.textOnSoft : colors.textOnDangerSoft,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
                     const SizedBox(height: 12),
                   ],
-                  if (!isSuccess)
-                    TextField(
-                      controller: resetEmailController,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
-                        hintText: 'student@campus.edu.pk',
-                        prefixIcon: Icon(Icons.mail_outline, size: 18),
-                      ),
-                    ),
+                  AppTextField(
+                    label: AppStrings.email,
+                    placeholder: AppStrings.emailPlaceholder,
+                    controller: resetEmailController,
+                    keyboardType: TextInputType.emailAddress,
+                  ),
                 ],
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(dialogCtx),
-                  child: Text(isSuccess ? 'Close' : 'Cancel'),
+                  onPressed: isSending ? null : () => Navigator.pop(dialogCtx),
+                  child: Text(
+                    AppStrings.cancel,
+                    style: TextStyle(
+                      fontFamily: 'Plus Jakarta Sans',
+                      fontWeight: FontWeight.w700,
+                      color: colors.mutedText,
+                    ),
+                  ),
                 ),
-                if (!isSuccess)
-                  ElevatedButton(
-                    onPressed: isSending
-                        ? null
-                        : () async {
-                            final email = resetEmailController.text.trim();
-                            if (email.isEmpty || !email.contains('@')) {
-                              setDialogState(() {
-                                statusMessage = 'Please enter a valid email address';
-                                isSuccess = false;
-                              });
-                              return;
-                            }
-                            setDialogState(() {
-                              isSending = true;
-                              statusMessage = null;
-                            });
-                            final res = await AuthService.forgotPassword(email);
+                TextButton(
+                  onPressed: isSending
+                      ? null
+                      : () async {
+                          final emailVal = resetEmailController.text.trim();
+                          if (emailVal.isEmpty) return;
+
+                          setDialogState(() {
+                            isSending = true;
+                            statusMessage = null;
+                          });
+
+                          try {
+                            final res = await AuthService.forgotPassword(emailVal);
                             setDialogState(() {
                               isSending = false;
-                              if (res.success) {
-                                isSuccess = true;
-                                statusMessage = 'Reset instructions sent! Please check your email inbox.';
-                              } else {
-                                isSuccess = false;
-                                statusMessage = ApiClient.humanizeError(res.message, res.statusCode);
-                              }
+                              isSuccess = res.success;
+                              statusMessage = res.message ??
+                                  (res.success
+                                      ? 'Reset link sent! Please check your inbox.'
+                                      : 'Unable to send reset link.');
                             });
-                          },
-                    child: isSending
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                          )
-                        : const Text('Send Reset Link'),
-                  ),
+                          } catch (e) {
+                            setDialogState(() {
+                              isSending = false;
+                              isSuccess = false;
+                              statusMessage = ApiClient.humanizeError(e);
+                            });
+                          }
+                        },
+                  child: isSending
+                      ? SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
+                          ),
+                        )
+                      : Text(
+                          'Send Reset Link',
+                          style: TextStyle(
+                            fontFamily: 'Plus Jakarta Sans',
+                            fontWeight: FontWeight.w700,
+                            color: colors.primary,
+                          ),
+                        ),
+                ),
               ],
             );
           },
@@ -166,247 +202,200 @@ class _SignInScreenState extends State<SignInScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+
     return Scaffold(
+      backgroundColor: colors.background,
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 36, 24, 24),
+          child: Form(
+            key: _formKey,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Logo & Header
-                Center(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(18),
-                    child: Image.asset(
-                      'assets/images/logo.png',
-                      width: 64,
-                      height: 64,
-                      fit: BoxFit.cover,
+                // App Logo + Name Brand Row
+                Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: colors.primary,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Image.asset(
+                          'assets/images/logo.png',
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Center(
+                            child: Text(
+                              kAppName.isNotEmpty ? kAppName[0] : 'C',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 18,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 10),
+                    Text(
+                      kAppName,
+                      style: TextStyle(
+                        fontFamily: 'Plus Jakarta Sans',
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.02 * 20,
+                        color: colors.text,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Welcome to CampuStitch',
-                  textAlign: TextAlign.center,
+                const SizedBox(height: 36),
+
+                // Welcome back header
+                Text(
+                  AppStrings.welcomeBack,
                   style: TextStyle(
-                    fontSize: 22,
+                    fontFamily: 'Plus Jakarta Sans',
+                    fontSize: 30,
                     fontWeight: FontWeight.w800,
-                    letterSpacing: -0.4,
+                    letterSpacing: -0.02 * 30,
+                    height: 1.15,
+                    color: colors.text,
                   ),
                 ),
                 const SizedBox(height: 6),
-                const Text(
-                  'Campus life, commute & verification',
-                  textAlign: TextAlign.center,
+                Text(
+                  AppStrings.loginSubtitle,
                   style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.zinc500,
+                    fontFamily: 'Plus Jakarta Sans',
+                    fontSize: 14,
+                    height: 1.45,
+                    color: colors.mutedText,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 26),
 
-                // Error Banner
-                if (_error != null) ...[
+                // Error alert box
+                if (_errorMessage != null) ...[
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppColors.error.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                      color: colors.dangerSoft,
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusInput),
+                      border: Border.all(color: colors.danger, width: 1),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.error_outline, size: 16, color: AppColors.error),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                _error!,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.error,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (_error!.toLowerCase().contains('invalid') ||
-                            _error!.toLowerCase().contains('credential') ||
-                            _error!.toLowerCase().contains('not found')) ...[
-                          const SizedBox(height: 8),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(builder: (_) => const SignUpScreen()),
-                              );
-                            },
-                            child: const Row(
-                              children: [
-                                Icon(Icons.arrow_forward, size: 13, color: AppColors.error),
-                                SizedBox(width: 4),
-                                Text(
-                                  'Don\'t have an account? Register here',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.error,
-                                    decoration: TextDecoration.underline,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ],
+                    child: Text(
+                      _errorMessage!,
+                      style: TextStyle(
+                        fontFamily: 'Plus Jakarta Sans',
+                        fontSize: 13,
+                        color: colors.textOnDangerSoft,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
                 ],
 
                 // Email field
-                const Text(
-                  'Email Address',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 6),
-                TextField(
+                AppTextField(
+                  label: AppStrings.email,
+                  placeholder: AppStrings.emailPlaceholder,
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    hintText: 'student@campus.edu.pk',
-                    prefixIcon: Icon(Icons.mail_outline, size: 18),
-                  ),
+                  validator: (val) {
+                    if (val == null || val.trim().isEmpty) {
+                      return 'Please enter your email';
+                    }
+                    if (!val.contains('@')) {
+                      return 'Please enter a valid email address';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 16),
 
                 // Password field
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Password',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-                    ),
-                    GestureDetector(
-                      onTap: _showForgotPasswordDialog,
-                      child: const Text(
-                        'Forgot Password?',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.zinc500,
-                          decoration: TextDecoration.underline,
-                        ),
-                      ),
-                    ),
-                  ],
+                AppTextField(
+                  label: AppStrings.password,
+                  placeholder: AppStrings.passwordPlaceholder,
+                  controller: _passwordController,
+                  obscureText: true,
+                  validator: (val) {
+                    if (val == null || val.trim().isEmpty) {
+                      return 'Please enter your password';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 6),
-                TextField(
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  decoration: InputDecoration(
-                    hintText: '••••••••',
-                    prefixIcon: const Icon(Icons.lock_outline, size: 18),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                        size: 18,
+
+                // Forgot password
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: InkWell(
+                    onTap: _showForgotPasswordDialog,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      height: AppDimensions.minTouchTarget,
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        AppStrings.forgotPassword,
+                        style: TextStyle(
+                          fontFamily: 'Plus Jakarta Sans',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: colors.primary,
+                        ),
                       ),
-                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                     ),
                   ),
                 ),
+                const SizedBox(height: 12),
+
+                // Primary Log in Button
+                AppButton(
+                  label: AppStrings.logIn,
+                  isLoading: _isLoading,
+                  onPressed: _handleSignIn,
+                ),
                 const SizedBox(height: 24),
 
-                // Submit Button
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _handleSignIn,
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Text('Sign In to Campus'),
-                ),
-                const SizedBox(height: 20),
-
-                // Register Link
+                // Create account link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
-                      'Don’t have an account? ',
-                      style: TextStyle(fontSize: 12, color: AppColors.zinc500),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const SignUpScreen()),
-                        );
-                      },
-                      child: const Text(
-                        'Register Student',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          decoration: TextDecoration.underline,
-                        ),
+                    Text(
+                      '${AppStrings.newHere} ',
+                      style: TextStyle(
+                        fontFamily: 'Plus Jakarta Sans',
+                        fontSize: 14,
+                        color: colors.mutedText,
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
-                // Terms & Privacy Footnote
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 4,
-                  children: [
-                    const Text(
-                      'By continuing, you agree to our',
-                      style: TextStyle(fontSize: 11, color: AppColors.zinc500),
                     ),
                     GestureDetector(
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => const TermsScreen()),
+                          MaterialPageRoute(
+                            builder: (_) => const SignUpScreen(),
+                          ),
                         );
                       },
-                      child: const Text(
-                        'Terms',
+                      child: Text(
+                        AppStrings.createAccount,
                         style: TextStyle(
-                          fontSize: 11,
+                          fontFamily: 'Plus Jakarta Sans',
+                          fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          decoration: TextDecoration.underline,
-                        ),
-                      ),
-                    ),
-                    const Text(
-                      '&',
-                      style: TextStyle(fontSize: 11, color: AppColors.zinc500),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const PrivacyScreen()),
-                        );
-                      },
-                      child: const Text(
-                        'Privacy Policy',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          decoration: TextDecoration.underline,
+                          color: colors.primary,
                         ),
                       ),
                     ),

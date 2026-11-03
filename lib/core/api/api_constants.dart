@@ -33,8 +33,12 @@ class ApiConstants {
   static String get communityJoin => '$baseUrl/api/community/join';
   static String get communityComments => '$baseUrl/api/community/comments';
 
-  // Push Notifications
+  // Push Notifications & In-App Alerts
   static String get pushToken => '$baseUrl/api/notifications/token';
+  static String get notifications => '$baseUrl/api/notifications';
+
+  // Messaging Endpoints
+  static String get messages => '$baseUrl/api/messages';
 
   // Profile & Account Deletion
   static String get profile => '$baseUrl/api/profile';
@@ -50,6 +54,18 @@ class ApiConstants {
   // Campus Services Endpoints
   static String get campusServices => '$baseUrl/api/services';
   static String get hostelServices => campusServices;
+
+  // Roommates Endpoints
+  static String get roommates => '$baseUrl/api/roommates';
+
+  // Bike Rentals & Requests Endpoints
+  static String get bikeRequests => '$baseUrl/api/bikes/requests';
+
+  // Market Requests Endpoints
+  static String get marketRequests => '$baseUrl/api/market/requests';
+
+  // Ratings Endpoints
+  static String get ratings => '$baseUrl/api/profile/ratings';
 
   // AI Assistant & Search
   static String get assistantChat => '$baseUrl/api/assistant/chat';

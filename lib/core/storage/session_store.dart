@@ -8,6 +8,15 @@ class SessionStore {
   static UserModel? _memoryUser;
   static String? _memoryToken;
 
+  static UserModel? get cachedUser => _memoryUser;
+  static String? get token => _memoryToken;
+
+  static Future<UserModel?> getUser() async {
+    if (_memoryUser != null) return _memoryUser;
+    final session = await loadSession();
+    return session?['user'] as UserModel?;
+  }
+
   static File? _getFile() {
     if (kIsWeb) return null;
     try {

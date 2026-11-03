@@ -1,226 +1,134 @@
 import 'package:flutter/material.dart';
+import '../constants/app_constants.dart';
+import 'app_colors.dart';
+import 'app_typography.dart';
 
-class AppColors {
-  // Monochrome Primary
-  static const Color black = Color(0xFF09090B);
-  static const Color primary = Color(0xFF09090B);
-  static const Color white = Color(0xFFFFFFFF);
-  static const Color darkCard = Color(0xFF121215);
-  static const Color lightBg = Color(0xFFF8F9FA);
-
-  // Zinc Grayscale
-  static const Color zinc100 = Color(0xFFF4F4F5);
-  static const Color zinc200 = Color(0xFFE4E4E7);
-  static const Color zinc300 = Color(0xFFD4D4D8);
-  static const Color zinc400 = Color(0xFFA1A1AA);
-  static const Color zinc500 = Color(0xFF71717A);
-  static const Color zinc600 = Color(0xFF52525B);
-  static const Color zinc700 = Color(0xFF3F3F46);
-  static const Color zinc800 = Color(0xFF27272A);
-  static const Color zinc900 = Color(0xFF18181B);
-
-  // Status & Role Accents
-  static const Color success = Color(0xFF10B981);
-  static const Color emerald500 = Color(0xFF10B981);
-  static const Color zinc950 = Color(0xFF09090B);
-  static const Color warning = Color(0xFFF59E0B);
-  static const Color error = Color(0xFFEF4444);
-  static const Color superAdmin = Color(0xFFA855F7);
-  static const Color campusAdmin = Color(0xFF3B82F6);
-}
+export 'app_colors.dart';
 
 class AppTheme {
   static ThemeData get lightTheme {
+    const c = AppColorsExtension.light;
+    final textTheme = AppTypography.createTextTheme(c.text, c.mutedText);
+
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      scaffoldBackgroundColor: AppColors.lightBg,
-      colorScheme: const ColorScheme.light(
-        primary: AppColors.black,
-        onPrimary: AppColors.white,
-        surface: AppColors.white,
-        onSurface: AppColors.black,
-        outline: AppColors.zinc200,
+      primaryColor: c.primary,
+      scaffoldBackgroundColor: c.background,
+      colorScheme: ColorScheme.light(
+        primary: c.primary,
+        onPrimary: c.textOnPrimary,
+        surface: c.surface,
+        onSurface: c.text,
+        error: c.danger,
+        onError: Colors.white,
       ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.white,
-        foregroundColor: AppColors.black,
-        elevation: 0,
-        centerTitle: false,
-        scrolledUnderElevation: 1,
-        titleTextStyle: TextStyle(
-          color: AppColors.black,
-          fontSize: 18,
-          fontWeight: FontWeight.w800,
-          letterSpacing: -0.3,
-        ),
-      ),
-      tabBarTheme: const TabBarThemeData(
-        labelColor: AppColors.black,
-        unselectedLabelColor: AppColors.zinc500,
-        indicatorColor: AppColors.black,
-        dividerColor: AppColors.zinc200,
-        labelStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
-        unselectedLabelStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-      ),
-      dividerTheme: const DividerThemeData(
-        color: AppColors.zinc200,
-        thickness: 1,
-        space: 1,
-      ),
+      dividerColor: c.divider,
+      cardColor: c.surface,
       cardTheme: CardThemeData(
-        color: AppColors.white,
+        color: c.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: AppColors.zinc200),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+          side: BorderSide(color: c.border, width: 1),
         ),
+        margin: EdgeInsets.zero,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.zinc100,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        fillColor: c.surface,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.zinc200),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusInput),
+          borderSide: BorderSide(color: c.inputBorder, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.zinc200),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusInput),
+          borderSide: BorderSide(color: c.inputBorder, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.black, width: 1.5),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusInput),
+          borderSide: BorderSide(color: c.primary, width: 1.5),
         ),
-        hintStyle: const TextStyle(color: AppColors.zinc500, fontSize: 13),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusInput),
+          borderSide: BorderSide(color: c.danger, width: 1),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusInput),
+          borderSide: BorderSide(color: c.danger, width: 1.5),
+        ),
+        hintStyle: textTheme.bodyMedium?.copyWith(color: c.mutedText),
+        labelStyle: textTheme.labelMedium?.copyWith(color: c.text),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.black,
-          foregroundColor: AppColors.white,
+          backgroundColor: c.primary,
+          foregroundColor: c.textOnPrimary,
           elevation: 0,
-          minimumSize: const Size.fromHeight(48),
+          minimumSize: const Size(double.infinity, AppDimensions.buttonHeight),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusButton),
           ),
-          textStyle: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-          ),
+          textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
         ),
       ),
-      navigationBarTheme: NavigationBarThemeData(
-        indicatorColor: AppColors.zinc200,
-        iconTheme: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: Colors.black);
-          }
-          return const IconThemeData(color: AppColors.zinc600);
-        }),
-        labelTextStyle: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return const TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.bold);
-          }
-          return const TextStyle(color: AppColors.zinc600, fontSize: 12);
-        }),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          backgroundColor: c.surface,
+          foregroundColor: c.text,
+          elevation: 0,
+          side: BorderSide(color: c.inputBorder, width: 1),
+          minimumSize: const Size(double.infinity, AppDimensions.buttonHeight),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppDimensions.radiusButton),
+          ),
+          textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+        ),
       ),
+      chipTheme: ChipThemeData(
+        backgroundColor: c.surface,
+        disabledColor: c.skeleton,
+        selectedColor: c.primary,
+        secondarySelectedColor: c.primary,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        labelStyle: textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+        secondaryLabelStyle: textTheme.bodySmall?.copyWith(color: c.textOnPrimary, fontWeight: FontWeight.w700),
+        shape: const StadiumBorder(),
+        side: BorderSide(color: c.inputBorder, width: 1),
+      ),
+      textTheme: textTheme,
+      extensions: const [c],
     );
   }
 
-  static ThemeData get darkTheme {
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.dark,
-      scaffoldBackgroundColor: AppColors.black,
-      colorScheme: const ColorScheme.dark(
-        primary: AppColors.white,
-        onPrimary: AppColors.black,
-        surface: AppColors.darkCard,
-        onSurface: AppColors.white,
-        outline: AppColors.zinc800,
-      ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.darkCard,
-        foregroundColor: AppColors.white,
-        elevation: 0,
-        centerTitle: false,
-        scrolledUnderElevation: 1,
-        titleTextStyle: TextStyle(
-          color: AppColors.white,
-          fontSize: 18,
-          fontWeight: FontWeight.w800,
-          letterSpacing: -0.3,
-        ),
-      ),
-      tabBarTheme: const TabBarThemeData(
-        labelColor: AppColors.white,
-        unselectedLabelColor: AppColors.zinc500,
-        indicatorColor: AppColors.white,
-        dividerColor: AppColors.zinc800,
-        labelStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
-        unselectedLabelStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-      ),
-      dividerTheme: const DividerThemeData(
-        color: AppColors.zinc800,
-        thickness: 1,
-        space: 1,
-      ),
-      cardTheme: CardThemeData(
-        color: AppColors.darkCard,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: AppColors.zinc800),
-        ),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: AppColors.zinc900,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.zinc800),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.zinc800),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.white, width: 1.5),
-        ),
-        hintStyle: const TextStyle(color: AppColors.zinc500, fontSize: 13),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.white,
-          foregroundColor: AppColors.black,
-          elevation: 0,
-          minimumSize: const Size.fromHeight(48),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          textStyle: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
-      navigationBarTheme: NavigationBarThemeData(
-        indicatorColor: AppColors.zinc800,
-        iconTheme: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: Colors.white);
-          }
-          return const IconThemeData(color: AppColors.zinc400);
-        }),
-        labelTextStyle: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold);
-          }
-          return const TextStyle(color: AppColors.zinc400, fontSize: 12);
-        }),
-      ),
+  static ThemeData get darkTheme => lightTheme;
+
+  /// Helper for text fields rendered inside custom styled containers / search pills
+  /// to prevent inheriting outer OutlineInputBorder and filled colors.
+  static InputDecoration borderlessInput({
+    String? hintText,
+    TextStyle? hintStyle,
+    EdgeInsetsGeometry? contentPadding = EdgeInsets.zero,
+    bool isDense = true,
+    Widget? prefixIcon,
+    Widget? suffixIcon,
+  }) {
+    return InputDecoration(
+      hintText: hintText,
+      hintStyle: hintStyle,
+      border: InputBorder.none,
+      enabledBorder: InputBorder.none,
+      focusedBorder: InputBorder.none,
+      disabledBorder: InputBorder.none,
+      errorBorder: InputBorder.none,
+      focusedErrorBorder: InputBorder.none,
+      filled: false,
+      fillColor: Colors.transparent,
+      isDense: isDense,
+      contentPadding: contentPadding,
+      prefixIcon: prefixIcon,
+      suffixIcon: suffixIcon,
     );
   }
 }

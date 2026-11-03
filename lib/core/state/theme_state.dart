@@ -8,11 +8,11 @@ class ThemeState extends ChangeNotifier {
   ThemeState._internal();
 
   static const String _themeFileName = '.campus_stitch_theme.json';
-  ThemeMode _themeMode = ThemeMode.system;
-  bool _isInitialized = false;
+  ThemeMode _themeMode = ThemeMode.light;
+  bool _isInitialized = true;
 
-  ThemeMode get themeMode => _themeMode;
-  bool get isInitialized => _isInitialized;
+  ThemeMode get themeMode => ThemeMode.light;
+  bool get isInitialized => true;
 
   static File? _getFile() {
     if (kIsWeb) return null;
@@ -79,19 +79,21 @@ class ThemeState extends ChangeNotifier {
   }
 
   bool isDarkMode(BuildContext context) {
-    if (_themeMode == ThemeMode.dark) return true;
-    if (_themeMode == ThemeMode.light) return false;
-    return MediaQuery.platformBrightnessOf(context) == Brightness.dark;
+    return false;
   }
 
   String get currentModeTitle {
     switch (_themeMode) {
       case ThemeMode.light:
-        return 'Light Mode';
+        return 'Light';
       case ThemeMode.dark:
-        return 'Dark Mode';
+        return 'Dark';
       case ThemeMode.system:
-        return 'System Default';
+        return 'Same as phone';
     }
   }
 }
+
+// Aliases for idiomatic usage across screens
+typedef ThemeNotifier = ThemeState;
+typedef AppThemeMode = ThemeMode;

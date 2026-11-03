@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'core/constants/app_constants.dart';
 import 'core/state/theme_state.dart';
 import 'core/theme/app_theme.dart';
 import 'screens/splash_screen.dart';
@@ -24,11 +25,10 @@ class CampusStitchApp extends StatelessWidget {
       builder: (context, _) {
         return MaterialApp(
           navigatorKey: navigatorKey,
-          title: 'CampuStitch',
+          title: kAppName,
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode: ThemeState.instance.themeMode,
+          themeMode: ThemeMode.light,
           home: const SplashScreen(),
         );
       },

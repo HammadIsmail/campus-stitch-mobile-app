@@ -1,6 +1,7 @@
-import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import '../core/api/api_client.dart';
 import '../core/api/api_constants.dart';
+import '../models/ai_search_model.dart';
 
 class AssistantResponse {
   final String reply;
@@ -41,6 +42,7 @@ class AssistantResponse {
 }
 
 class AssistantService {
+  /// Legacy assistant ask method
   static Future<AssistantResponse?> askAssistant(String query) async {
     try {
       final res = await ApiClient.post(
@@ -48,12 +50,38 @@ class AssistantService {
         body: {'query': query},
       );
       if (res.success && res.data != null) {
-        final Map<String, dynamic> json = res.data is Map<String, dynamic>
-            ? res.data as Map<String, dynamic>
-            : (res.data is String ? jsonDecode(res.data) : {});
-        return AssistantResponse.fromJson(json);
+        return AssistantResponse.fromJson(res.data);
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Error asking assistant: $e');
+    }
+    return null;
+  }
+
+  /// Campus AI Search (English, Urdu, Roman Urdu) with server-side tenant isolation
+  static Future<AiSearchResultModel?> searchCampusAi({
+    required String query,
+    required String campusId,
+    required String campusName,
+  }) async {
+    try {
+      final payload = {
+        'query': query.trim(),
+        'campus_id': campusId,
+        'campus_name': campusName,
+      };
+
+      final res = await ApiClient.post(
+        ApiConstants.assistantChat,
+        body: payload,
+      );
+
+      if (res.success && res.data is Map) {
+        return AiSearchResultModel.fromJson(Map<String, dynamic>.from(res.data as Map));
+      }
+    } catch (e) {
+      debugPrint('Error performing Campus AI search: $e');
+    }
     return null;
   }
 }

@@ -1,31 +1,46 @@
 import 'package:flutter/material.dart';
-import '../core/theme/app_theme.dart';
-import 'services/services_screen.dart';
-import 'commute/commute_screen.dart';
+import '../../widgets/bottom_tab_bar.dart';
+import 'bikes/bikes_screen.dart';
 import 'market/market_screen.dart';
 import 'profile/profile_screen.dart';
+import 'roommates/roommates_screen.dart';
+import 'services/services_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
-  const MainNavigationScreen({super.key});
+  final int initialIndex;
+
+  const MainNavigationScreen({
+    super.key,
+    this.initialIndex = 0,
+  });
 
   @override
   State<MainNavigationScreen> createState() => _MainNavigationScreenState();
 }
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
-  int _currentIndex = 0;
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+  }
 
   void _onTabTapped(int index) {
-    setState(() => _currentIndex = index);
+    if (_currentIndex != index) {
+      setState(() => _currentIndex = index);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final screens = [
       const ServicesScreen(),
-      const CommuteScreen(),
+      const RoommatesScreen(),
+      const BikesScreen(),
       const MarketScreen(),
-      const ProfileScreen(),
+      ProfileScreen(onSwitchTab: _onTabTapped),
     ];
 
     return Scaffold(
@@ -33,34 +48,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         index: _currentIndex,
         children: screens,
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: _onTabTapped,
-        indicatorColor: Theme.of(context).brightness == Brightness.dark
-            ? AppColors.zinc800
-            : AppColors.zinc200,
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_repair_service_outlined),
-            selectedIcon: Icon(Icons.home_repair_service),
-            label: 'Services',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.directions_car_outlined),
-            selectedIcon: Icon(Icons.directions_car),
-            label: 'Commute',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.storefront_outlined),
-            selectedIcon: Icon(Icons.storefront),
-            label: 'Market',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
+      bottomNavigationBar: BottomTabBar(
+        currentIndex: _currentIndex,
+        onTabSelected: _onTabTapped,
       ),
     );
   }

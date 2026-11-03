@@ -47,8 +47,17 @@ app.*.map.json
 # Widget Preview related
 .widget_preview/
 
+# Kotlin
+.kotlin/
+*.salive
+
 # Android Keystores & Signing Secrets
 *.jks
 *.keystore
 **/android/key.properties
 key.properties
+
+# Design UI references & exports
+UI/
+/UI/
+**/UI/

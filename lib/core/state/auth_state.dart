@@ -12,9 +12,19 @@ class AuthState extends ChangeNotifier {
   String? _errorMessage;
 
   UserModel? get user => _user;
+  UserModel? get currentUser => _user;
   bool get isAuthenticated => _user != null;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+
+  void login(UserModel user) {
+    _user = user;
+    notifyListeners();
+  }
+
+  void logout() {
+    signOut();
+  }
 
   // Active Tenant Scope
   String get activeCampusId => _user?.campusId ?? 'camp_uet_main';
@@ -86,7 +96,7 @@ class AuthState extends ChangeNotifier {
     required String name,
     required String email,
     required String password,
-    required String studentId,
+    String? studentId,
     required String universityId,
     required String universityName,
     required String campusId,

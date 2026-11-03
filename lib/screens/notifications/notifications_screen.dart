@@ -1,26 +1,17 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_theme.dart';
-import '../../widgets/empty_state_view.dart';
-
-class NotificationItem {
-  final String id;
-  final String type; // 'ride', 'market', 'bike', 'verification', 'community'
-  final String title;
-  final String message;
-  final String time;
-  final String deeplink;
-  bool read;
-
-  NotificationItem({
-    required this.id,
-    required this.type,
-    required this.title,
-    required this.message,
-    required this.time,
-    required this.deeplink,
-    this.read = false,
-  });
-}
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../core/storage/session_store.dart';
+import '../../core/theme/app_colors.dart';
+import '../../models/chat_model.dart';
+import '../../models/notification_model.dart';
+import '../../services/notification_service.dart';
+import '../../widgets/state_view.dart';
+import '../../widgets/sub_header.dart';
+import '../bikes/bike_requests_screen.dart';
+import '../market/market_screen.dart';
+import '../messages/chat_detail_screen.dart';
+import '../profile/user_profile_screen.dart';
+import '../ratings/rate_user_screen.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -31,255 +22,372 @@ class NotificationsScreen extends StatefulWidget {
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
   String _selectedFilter = 'All';
+  final List<String> _filters = ['All', 'Requests', 'Ratings'];
 
-  final List<NotificationItem> _notifications = [];
+  List<NotificationItemModel> _notifications = [];
+  bool _isLoading = true;
+  String? _errorMessage;
 
-  int get _unreadCount => _notifications.where((n) => !n.read).length;
-
-  List<NotificationItem> get _filteredNotifications {
-    if (_selectedFilter == 'All') return _notifications;
-    if (_selectedFilter == 'Commute') {
-      return _notifications.where((n) => n.type == 'ride' || n.type == 'bike').toList();
-    }
-    if (_selectedFilter == 'Market') {
-      return _notifications.where((n) => n.type == 'market').toList();
-    }
-    if (_selectedFilter == 'Verification') {
-      return _notifications.where((n) => n.type == 'verification').toList();
-    }
-    return _notifications;
+  @override
+  void initState() {
+    super.initState();
+    _loadNotifications();
   }
 
-  void _markAllAsRead() {
+  Future<void> _loadNotifications() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final user = await SessionStore.getUser();
+      final campusId = user?.campusId ?? 'camp_fast_isb';
+      final list = await NotificationService.getNotifications(
+        campusId: campusId,
+        filter: _selectedFilter,
+      );
+
+      if (mounted) {
+        setState(() {
+          _notifications = list;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Could not load notifications';
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _markAllAsRead() async {
+    final user = await SessionStore.getUser();
+    final campusId = user?.campusId ?? 'camp_fast_isb';
+
     setState(() {
       for (var n in _notifications) {
         n.read = true;
       }
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('All campus notifications marked as read'),
-        duration: Duration(seconds: 2),
-      ),
-    );
-  }
 
-  IconData _getIconForType(String type) {
-    switch (type) {
-      case 'ride':
-        return Icons.directions_car_outlined;
-      case 'bike':
-        return Icons.two_wheeler_outlined;
-      case 'market':
-        return Icons.shopping_bag_outlined;
-      case 'verification':
-        return Icons.verified_user_outlined;
-      case 'community':
-        return Icons.forum_outlined;
-      default:
-        return Icons.notifications_outlined;
+    await NotificationService.markAllAsRead(campusId: campusId);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('All notifications marked as read'),
+          backgroundColor: context.colors.primary,
+          duration: const Duration(seconds: 2),
+        ),
+      );
     }
   }
 
-  Color _getColorForType(String type) {
+  Future<void> _handleNotificationTap(NotificationItemModel item) async {
+    final user = await SessionStore.getUser();
+    final campusId = user?.campusId ?? 'camp_fast_isb';
+
+    if (!item.read) {
+      setState(() => item.read = true);
+      NotificationService.markAsRead(item.id, campusId: campusId);
+    }
+
+    if (!mounted) return;
+
+    final link = item.deeplink ?? '';
+    if (link.startsWith('chat:') || item.type == 'chat' || item.type == 'voice') {
+      final convoId = link.replaceAll('chat:', '');
+      final convo = ConversationModel(
+        id: convoId.isNotEmpty ? convoId : 'conv_notif',
+        contactId: 'u_peer',
+        contactName: item.title.split(' ').first,
+        contextType: 'general',
+        contextTitle: item.body,
+        lastMessage: item.body,
+        lastTime: item.time,
+        campusId: campusId,
+      );
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => ChatDetailScreen(conversation: convo)),
+      );
+    } else if (link == 'bikes:requests' || item.type == 'bike_request') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const BikeRequestsScreen()),
+      );
+    } else if (link.startsWith('rate:') || item.type == 'rating_prompt') {
+      final peerName = item.metadata?['peer_name']?.toString() ?? 'Campus Peer';
+      final peerId = item.metadata?['peer_id']?.toString() ?? 'u_peer';
+      final ctxTitle = item.metadata?['context_title']?.toString() ?? item.body;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => RateUserScreen(
+            peerId: peerId,
+            peerName: peerName,
+            contextTitle: ctxTitle,
+          ),
+        ),
+      );
+    } else if (item.type == 'market_request' || item.type == 'market_sold') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const MarketScreen()),
+      );
+    } else if (item.type == 'new_rating') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const UserProfileScreen()),
+      );
+    }
+  }
+
+  IconData _getIcon(String type) {
     switch (type) {
-      case 'ride':
-        return const Color(0xFF2563EB);
+      case 'voice':
+      case 'chat':
+      case 'message':
+        return LucideIcons.messageSquare;
       case 'bike':
-        return const Color(0xFF0D9488);
+      case 'bike_request':
+      case 'bike_booked':
+      case 'bike_returned':
+        return LucideIcons.bike;
       case 'market':
-        return const Color(0xFFD97706);
-      case 'verification':
-        return AppColors.success;
-      case 'community':
-        return const Color(0xFF8B5CF6);
+      case 'market_request':
+      case 'market_sold':
+        return LucideIcons.shoppingBag;
+      case 'rating':
+      case 'rating_prompt':
+      case 'new_rating':
+        return LucideIcons.star;
       default:
-        return AppColors.zinc500;
+        return LucideIcons.bell;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = context.colors;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Row(
+      backgroundColor: colors.background,
+      body: SafeArea(
+        child: Column(
           children: [
-            const Text('Notifications'),
-            if (_unreadCount > 0) ...[
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.white : AppColors.black,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '$_unreadCount new',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    color: isDark ? AppColors.black : AppColors.white,
+            SubHeader(
+              title: 'Notifications',
+              onBack: () => Navigator.of(context).pop(),
+            ),
+
+            // Filter chips and Mark all read action
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: _filters.map((filter) {
+                          final isSelected = _selectedFilter == filter;
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: GestureDetector(
+                              onTap: () {
+                                setState(() => _selectedFilter = filter);
+                                _loadNotifications();
+                              },
+                              child: Container(
+                                height: 44,
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? colors.primary : colors.surface,
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(
+                                    color: isSelected ? colors.primary : colors.inputBorder,
+                                  ),
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  filter,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                                    color: isSelected ? Colors.white : colors.textPrimary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
                   ),
-                ),
+                  GestureDetector(
+                    onTap: _markAllAsRead,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                      child: Text(
+                        'Mark all read',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: colors.primary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
+
+            // Notifications List
+            Expanded(
+              child: _buildBody(colors),
+            ),
           ],
         ),
-        actions: [
-          if (_unreadCount > 0)
-            TextButton.icon(
-              onPressed: _markAllAsRead,
-              icon: const Icon(Icons.done_all, size: 16),
-              label: const Text('Mark read', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
-            ),
-        ],
       ),
-      body: Column(
-        children: [
-          // Filter Tabs
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            child: Row(
-              children: ['All', 'Commute', 'Market', 'Verification'].map((filter) {
-                final isSelected = _selectedFilter == filter;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: ChoiceChip(
-                    label: Text(filter),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      if (selected) setState(() => _selectedFilter = filter);
-                    },
-                    selectedColor: isDark ? AppColors.white : AppColors.black,
-                    labelStyle: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: isSelected
-                          ? (isDark ? AppColors.black : AppColors.white)
-                          : (isDark ? AppColors.zinc400 : AppColors.zinc600),
+    );
+  }
+
+  Widget _buildBody(AppColorsExtension colors) {
+    if (_isLoading) {
+      return const StateView.loadingList();
+    }
+
+    if (_errorMessage != null) {
+      return StateView.offline(onRetry: _loadNotifications);
+    }
+
+    if (_notifications.isEmpty) {
+      return StateView.empty(
+        title: 'No notifications',
+        body: 'Activity about your bike rentals, marketplace buy requests, and ratings will appear here.',
+        icon: LucideIcons.bell,
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadNotifications,
+      color: colors.primary,
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        itemCount: _notifications.length,
+        itemBuilder: (context, index) {
+          final item = _notifications[index];
+          final isUnread = !item.read;
+
+          final cardBg = isUnread ? const Color(0xFFE9F4EE) : colors.surface;
+          final iconBg = isUnread ? colors.primary : colors.skeleton;
+          final iconFg = isUnread ? Colors.white : colors.textMuted;
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (item.head != null && item.head!.isNotEmpty) ...[
+                Padding(
+                  padding: const EdgeInsets.only(top: 8, bottom: 8),
+                  child: Text(
+                    item.head!,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: colors.textMuted,
                     ),
-                    backgroundColor: isDark ? AppColors.zinc900 : AppColors.zinc100,
-                    side: BorderSide(
-                      color: isSelected
-                          ? Colors.transparent
-                          : (isDark ? AppColors.zinc800 : AppColors.zinc200),
-                    ),
-                    showCheckmark: false,
                   ),
-                );
-              }).toList(),
-            ),
-          ),
-          const Divider(height: 1),
-
-          // Notifications List
-          Expanded(
-            child: _filteredNotifications.isEmpty
-                ? const EmptyStateView(
-                    icon: Icons.notifications_off_outlined,
-                    title: 'No Notifications Found',
-                    message: 'You\'re all caught up with your campus updates.',
-                  )
-                : ListView.separated(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _filteredNotifications.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 10),
-                    itemBuilder: (context, index) {
-                      final item = _filteredNotifications[index];
-                      final iconColor = _getColorForType(item.type);
-
-                      return InkWell(
-                        onTap: () {
-                          setState(() {
-                            item.read = true;
-                          });
-                        },
-                        borderRadius: BorderRadius.circular(14),
-                        child: Container(
-                          padding: const EdgeInsets.all(14),
+                ),
+              ],
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: InkWell(
+                  onTap: () => _handleNotificationTap(item),
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: cardBg,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: colors.border),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
                           decoration: BoxDecoration(
-                            color: item.read
-                                ? (isDark ? AppColors.darkCard : AppColors.white)
-                                : (isDark
-                                    ? AppColors.zinc900.withValues(alpha: 0.9)
-                                    : AppColors.zinc100.withValues(alpha: 0.9)),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: item.read
-                                  ? (isDark ? AppColors.zinc800 : AppColors.zinc200)
-                                  : (isDark ? AppColors.zinc700 : AppColors.zinc300),
-                              width: item.read ? 1 : 1.5,
-                            ),
+                            color: iconBg,
+                            borderRadius: BorderRadius.circular(20),
                           ),
-                          child: Row(
+                          alignment: Alignment.center,
+                          child: Icon(_getIcon(item.type), size: 20, color: iconFg),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Container(
-                                width: 38,
-                                height: 38,
-                                decoration: BoxDecoration(
-                                  color: iconColor.withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Icon(_getIconForType(item.type), color: iconColor, size: 20),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            item.title,
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: item.read ? FontWeight.w700 : FontWeight.w900,
-                                            ),
-                                          ),
-                                        ),
-                                        Text(
-                                          item.time,
-                                          style: const TextStyle(fontSize: 11, color: AppColors.zinc500),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      item.message,
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      item.title,
                                       style: TextStyle(
-                                        fontSize: 12,
-                                        color: isDark ? AppColors.zinc400 : AppColors.zinc600,
-                                        height: 1.35,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
+                                        color: colors.textPrimary,
+                                        height: 1.3,
                                       ),
                                     ),
-                                  ],
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    item.time,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: colors.textMuted,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                item.body,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: colors.textMuted,
                                 ),
                               ),
-                              if (!item.read) ...[
-                                const SizedBox(width: 8),
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  margin: const EdgeInsets.only(top: 4),
-                                  decoration: BoxDecoration(
-                                    color: isDark ? AppColors.white : AppColors.black,
-                                    shape: BoxShape.circle,
+                              if (item.cta != null && item.cta!.isNotEmpty) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  item.cta!,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                    color: colors.primary,
                                   ),
                                 ),
                               ],
                             ],
                           ),
                         ),
-                      );
-                    },
+                      ],
+                    ),
                   ),
-          ),
-        ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

@@ -1,127 +1,135 @@
 import '../core/api/api_client.dart';
 import '../core/api/api_constants.dart';
-
-class MarketItemModel {
-  final String id;
-  final String title;
-  final int price;
-  final String category;
-  final String sellerName;
-  final bool isVerified;
-  final String condition;
-  final String campusId;
-  final String? description;
-  final String? location;
-  final String? imageUrl;
-  final String? createdAt;
-
-  MarketItemModel({
-    required this.id,
-    required this.title,
-    required this.price,
-    required this.category,
-    required this.sellerName,
-    this.isVerified = true,
-    required this.condition,
-    required this.campusId,
-    this.description,
-    this.location,
-    this.imageUrl,
-    this.createdAt,
-  });
-
-  factory MarketItemModel.fromJson(Map<String, dynamic> json) {
-    return MarketItemModel(
-      id: json['id']?.toString() ?? '',
-      title: json['title']?.toString() ?? '',
-      price: json['price'] is num ? (json['price'] as num).toInt() : int.tryParse(json['price']?.toString() ?? '0') ?? 0,
-      category: json['category']?.toString() ?? 'Other',
-      sellerName: json['seller_name']?.toString() ?? 'Student',
-      isVerified: json['seller_verified'] == true || json['is_verified'] == true,
-      condition: json['condition']?.toString() ?? 'Good',
-      campusId: json['campus_id']?.toString() ?? '',
-      description: json['description']?.toString(),
-      location: json['location']?.toString(),
-      imageUrl: json['image_url']?.toString(),
-      createdAt: json['created_at']?.toString(),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'title': title,
-      'price': price,
-      'category': category,
-      'seller_name': sellerName,
-      'seller_verified': isVerified,
-      'condition': condition,
-      'campus_id': campusId,
-      'description': description,
-      'location': location,
-      'image_url': imageUrl,
-      'created_at': createdAt,
-    };
-  }
-}
+import '../models/market_item_model.dart';
+export '../models/market_item_model.dart';
 
 class MarketService {
-  /// Fetches real market listings from backend API
+  static List<MarketItemModel> _cachedListings = [];
+  static bool shouldSimulateOffline = false;
+
+  static List<MarketItemModel> get cachedListings => List.unmodifiable(_cachedListings);
+  static set cachedListings(List<MarketItemModel> items) {
+    _cachedListings = List.from(items);
+  }
+
   static Future<List<MarketItemModel>> getListings({
-    required String campusId,
+    String? campusId,
     String? category,
     String? query,
   }) async {
-    try {
-      final params = <String, String>{'campusId': campusId};
-      if (category != null && category.isNotEmpty && category != 'All') {
-        params['category'] = category;
-      }
-      if (query != null && query.trim().isNotEmpty) {
-        params['query'] = query.trim();
-      }
+    if (shouldSimulateOffline) {
+      throw Exception('Network unreachable (simulated offline)');
+    }
+    final queryParams = <String>[];
+    if (campusId != null && campusId.isNotEmpty) {
+      queryParams.add('campusId=$campusId');
+    }
+    if (category != null && category.isNotEmpty && category != 'All') {
+      queryParams.add('category=${Uri.encodeComponent(category)}');
+    }
+    if (query != null && query.isNotEmpty) {
+      queryParams.add('query=${Uri.encodeComponent(query)}');
+    }
 
-      final queryString = Uri(queryParameters: params).query;
-      final url = '${ApiConstants.marketListings}?$queryString';
-      final res = await ApiClient.get(url);
+    final qs = queryParams.isNotEmpty ? '?${queryParams.join('&')}' : '';
+    final res = await ApiClient.get('${ApiConstants.marketListings}$qs');
 
-      if (res.success && res.data is Map && (res.data as Map)['listings'] is List) {
-        final list = (res.data as Map)['listings'] as List;
-        return list.map((item) => MarketItemModel.fromJson(Map<String, dynamic>.from(item))).toList();
+    if (res.success && res.data is Map) {
+      final list = (res.data as Map)['listings'];
+      if (list is List) {
+        final items = list
+            .map((item) => MarketItemModel.fromJson(Map<String, dynamic>.from(item)))
+            .toList();
+        if (items.isNotEmpty) {
+          _cachedListings = items;
+        }
+        return items;
       }
-    } catch (_) {}
-
-    // Honest empty state when database has 0 listings
-    return [];
+      return [];
+    } else {
+      throw Exception(res.message ?? 'Failed to load market listings');
+    }
   }
 
-  /// Posts a new marketplace listing
-  static Future<bool> createListing({
-    required String campusId,
-    required String universityId,
-    required String sellerName,
+  static Future<ApiResponse> createListing({
     required String title,
     required int price,
     required String category,
-    required String condition,
-    required String description,
-    required String location,
-    required String imageUrl,
+    String brand = '',
+    String condition = 'Used',
+    String description = '',
+    String location = 'Campus Hostel',
+    required String sellerName,
+    String? campusId,
+    String? imageUrl,
+    bool isNegotiable = true,
+    Map<String, dynamic> attributes = const {},
+  }) async {
+    return await ApiClient.post(
+      ApiConstants.marketListings,
+      body: {
+        'title': title.trim(),
+        'price': price,
+        'category': category,
+        'brand': brand.trim(),
+        'condition': condition,
+        'description': description.trim(),
+        'location': location.trim(),
+        'seller_name': sellerName.trim(),
+        'campus_id': campusId,
+        'image_url': imageUrl,
+        'is_negotiable': isNegotiable,
+        'attributes': attributes,
+      },
+    );
+  }
+
+  static Future<ApiResponse> sendBuyRequest({
+    required String listingId,
+    required int offerPrice,
+    String message = '',
+    required String buyerName,
+    String? buyerId,
+  }) async {
+    return await ApiClient.post(
+      ApiConstants.marketRequests,
+      body: {
+        'listingId': listingId,
+        'offerPrice': offerPrice,
+        'message': message.trim(),
+        'buyerName': buyerName,
+        'buyerId': buyerId,
+      },
+    );
+  }
+
+  static Future<List<MarketBuyRequestModel>> getBuyRequests({required String listingId}) async {
+    try {
+      final res = await ApiClient.get('${ApiConstants.marketRequests}?listingId=$listingId');
+      if (res.success && res.data is Map) {
+        final list = (res.data as Map)['requests'];
+        if (list is List) {
+          return list
+              .map((item) => MarketBuyRequestModel.fromJson(Map<String, dynamic>.from(item)))
+              .toList();
+        }
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  static Future<bool> respondToBuyRequest({
+    required String requestId,
+    required String listingId,
+    required String action, // 'accept' or 'decline'
   }) async {
     try {
-      final res = await ApiClient.post(
-        ApiConstants.marketListings,
+      final res = await ApiClient.patch(
+        ApiConstants.marketRequests,
         body: {
-          'campus_id': campusId,
-          'university_id': universityId,
-          'seller_name': sellerName,
-          'title': title.trim(),
-          'price': price,
-          'category': category,
-          'condition': condition,
-          'description': description.trim(),
-          'location': location.trim(),
-          'image_url': imageUrl.trim(),
+          'id': requestId,
+          'listingId': listingId,
+          'action': action,
         },
       );
       return res.success;
@@ -130,31 +138,14 @@ class MarketService {
     }
   }
 
-  /// Updates listing details or status
-  static Future<bool> updateListing({
-    required String id,
-    String? status,
-    int? price,
-    String? title,
-    String? category,
-    String? condition,
-    String? description,
-    String? location,
-    String? imageUrl,
-  }) async {
+  static Future<bool> markSoldOut({required String listingId}) async {
     try {
-      final body = <String, dynamic>{'id': id};
-      if (status != null) body['status'] = status;
-      if (price != null) body['price'] = price;
-      if (title != null) body['title'] = title;
-      if (category != null) body['category'] = category;
-      if (condition != null) body['condition'] = condition;
-      if (description != null) body['description'] = description;
-      if (location != null) body['location'] = location;
-      if (imageUrl != null) body['image_url'] = imageUrl;
       final res = await ApiClient.patch(
         ApiConstants.marketListings,
-        body: body,
+        body: {
+          'id': listingId,
+          'status': 'sold',
+        },
       );
       return res.success;
     } catch (_) {
@@ -162,15 +153,34 @@ class MarketService {
     }
   }
 
-  /// Deletes a listing
-  static Future<bool> deleteListing(String id) async {
-    try {
-      final res = await ApiClient.delete(
-        '${ApiConstants.marketListings}?id=$id',
-      );
-      return res.success;
-    } catch (_) {
-      return false;
-    }
+  static Future<ApiResponse> updateListing({
+    required String listingId,
+    String? title,
+    int? price,
+    String? category,
+    String? condition,
+    String? description,
+    String? location,
+    String? imageUrl,
+    String? status,
+  }) async {
+    return await ApiClient.patch(
+      ApiConstants.marketListings,
+      body: {
+        'id': listingId,
+        'title': ?title?.trim(),
+        'price': ?price,
+        'category': ?category,
+        'condition': ?condition,
+        'description': ?description?.trim(),
+        'location': ?location?.trim(),
+        'image_url': ?imageUrl,
+        'status': ?status,
+      },
+    );
+  }
+
+  static Future<ApiResponse> deleteListing(String listingId) async {
+    return await ApiClient.delete('${ApiConstants.marketListings}?id=$listingId');
   }
 }

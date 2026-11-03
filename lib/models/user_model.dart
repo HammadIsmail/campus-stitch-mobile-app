@@ -13,6 +13,12 @@ class UserModel {
   final String? program;
   final String? bio;
   final String? phone;
+  final String? department;
+  final String? hostelBlock;
+
+  String get id => userId;
+  String get fullName => name;
+  String get university => universityName;
 
   UserModel({
     required this.userId,
@@ -20,15 +26,17 @@ class UserModel {
     required this.name,
     this.studentId = '',
     this.role = 'student',
-    this.universityId = 'uni_uet_lahore',
-    this.universityName = 'UET Lahore',
-    this.campusId = 'camp_uet_main',
-    this.campusName = 'Main Campus (Lahore)',
+    this.universityId = '',
+    this.universityName = '',
+    this.campusId = '',
+    this.campusName = '',
     this.isVerified = false,
     this.avatarUrl,
     this.program,
     this.bio,
     this.phone,
+    this.department,
+    this.hostelBlock,
   });
 
   bool get isSuperAdmin => role == 'super_admin';
@@ -49,11 +57,14 @@ class UserModel {
     String? program,
     String? bio,
     String? phone,
+    String? fullName,
+    String? department,
+    String? hostelBlock,
   }) {
     return UserModel(
       userId: userId ?? this.userId,
       email: email ?? this.email,
-      name: name ?? this.name,
+      name: fullName ?? name ?? this.name,
       studentId: studentId ?? this.studentId,
       role: role ?? this.role,
       universityId: universityId ?? this.universityId,
@@ -65,6 +76,8 @@ class UserModel {
       program: program ?? this.program,
       bio: bio ?? this.bio,
       phone: phone ?? this.phone,
+      department: department ?? this.department,
+      hostelBlock: hostelBlock ?? this.hostelBlock,
     );
   }
 
@@ -75,15 +88,17 @@ class UserModel {
       name: json['name']?.toString() ?? json['full_name']?.toString() ?? 'Student',
       studentId: json['studentId']?.toString() ?? json['student_id']?.toString() ?? '',
       role: json['role']?.toString() ?? 'student',
-      universityId: json['universityId']?.toString() ?? json['university_id']?.toString() ?? 'uni_uet_lahore',
-      universityName: json['universityName']?.toString() ?? json['university']?.toString() ?? 'UET Lahore',
-      campusId: json['campusId']?.toString() ?? json['campus_id']?.toString() ?? 'camp_uet_main',
-      campusName: json['campusName']?.toString() ?? json['campus_name']?.toString() ?? 'Main Campus (Lahore)',
+      universityId: json['universityId']?.toString() ?? json['university_id']?.toString() ?? '',
+      universityName: json['universityName']?.toString() ?? json['university']?.toString() ?? '',
+      campusId: json['campusId']?.toString() ?? json['campus_id']?.toString() ?? '',
+      campusName: json['campusName']?.toString() ?? json['campus_name']?.toString() ?? '',
       isVerified: json['isVerified'] == true || json['is_verified'] == true,
       avatarUrl: json['avatarUrl']?.toString() ?? json['avatar_url']?.toString(),
       program: json['program']?.toString(),
       bio: json['bio']?.toString(),
       phone: json['phone']?.toString(),
+      department: json['department']?.toString(),
+      hostelBlock: json['hostel_block']?.toString() ?? json['hostelBlock']?.toString(),
     );
   }
 
@@ -103,6 +118,8 @@ class UserModel {
       'program': program,
       'bio': bio,
       'phone': phone,
+      'department': department,
+      'hostelBlock': hostelBlock,
     };
   }
 }

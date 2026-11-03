@@ -60,8 +60,8 @@ class CommuteService {
 
   /// Posts a new campus ride
   static Future<RideModel> createRide({
-    required String campusId,
-    required String universityId,
+    String? campusId,
+    String? universityId,
     String? organizerId,
     required String organizerName,
     required String fromLocation,
@@ -78,8 +78,8 @@ class CommuteService {
   }) async {
     final newRide = RideModel(
       id: 'r_${DateTime.now().millisecondsSinceEpoch}',
-      campusId: campusId,
-      universityId: universityId,
+      campusId: campusId ?? '',
+      universityId: universityId ?? '',
       organizerId: organizerId,
       organizerName: organizerName,
       organizerVerified: true,
@@ -160,6 +160,39 @@ class CommuteService {
     return await CommuteStore.loadBookings();
   }
 
+  static Future<ApiResponse> updateRide({
+    required String id,
+    String? fromLocation,
+    String? toLocation,
+    String? departureTime,
+    String? departureDate,
+    String? vehicleType,
+    int? pricePerSeat,
+    int? availableSeats,
+    String? notes,
+    String? status,
+  }) async {
+    return await ApiClient.patch(
+      ApiConstants.commuteRides,
+      body: {
+        'id': id,
+        'fromLocation': ?fromLocation?.trim(),
+        'toLocation': ?toLocation?.trim(),
+        'departureTime': ?departureTime?.trim(),
+        'departureDate': ?departureDate?.trim(),
+        'vehicleType': ?vehicleType,
+        'pricePerSeat': ?pricePerSeat,
+        'availableSeats': ?availableSeats,
+        'notes': ?notes?.trim(),
+        'status': ?status,
+      },
+    );
+  }
+
+  static Future<ApiResponse> deleteRide(String id) async {
+    return await ApiClient.delete('${ApiConstants.commuteRides}?id=$id');
+  }
+
   /// Fetches campus bikes
   static Future<List<BikeModel>> getBikes({required String campusId}) async {
     try {
@@ -238,50 +271,6 @@ class CommuteService {
   static Future<bool> deleteBike(String id) async {
     try {
       final res = await ApiClient.delete('${ApiConstants.commuteBikes}?id=$id');
-      return res.success;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  /// Updates ride details or status
-  static Future<bool> updateRide({
-    required String id,
-    String? status,
-    int? availableSeats,
-    String? notes,
-    int? pricePerSeat,
-    String? departureTime,
-    String? fromLocation,
-    String? toLocation,
-    String? vehicleType,
-  }) async {
-    try {
-      final body = <String, dynamic>{'id': id};
-      if (status != null) body['status'] = status;
-      if (availableSeats != null) body['availableSeats'] = availableSeats;
-      if (notes != null) body['notes'] = notes;
-      if (pricePerSeat != null) body['pricePerSeat'] = pricePerSeat;
-      if (departureTime != null) body['departureTime'] = departureTime;
-      if (fromLocation != null) body['fromLocation'] = fromLocation;
-      if (toLocation != null) body['toLocation'] = toLocation;
-      if (vehicleType != null) body['vehicleType'] = vehicleType;
-      final res = await ApiClient.patch(
-        ApiConstants.commuteRides,
-        body: body,
-      );
-      return res.success;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  /// Deletes a ride
-  static Future<bool> deleteRide(String id) async {
-    try {
-      final res = await ApiClient.delete(
-        '${ApiConstants.commuteRides}?id=$id',
-      );
       return res.success;
     } catch (_) {
       return false;

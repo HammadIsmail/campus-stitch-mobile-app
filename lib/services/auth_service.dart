@@ -4,6 +4,11 @@ import '../core/storage/session_store.dart';
 import '../models/user_model.dart';
 
 class AuthService {
+  static UserModel? get currentUser => SessionStore.cachedUser;
+
+  static Future<void> saveCurrentUser(UserModel user) async {
+    await SessionStore.saveSession(token: SessionStore.token ?? '', user: user);
+  }
   static Future<ApiResponse> signIn({
     required String email,
     required String password,
@@ -53,7 +58,7 @@ class AuthService {
     required String name,
     required String email,
     required String password,
-    required String studentId,
+    String? studentId,
     required String universityId,
     required String universityName,
     required String campusId,
@@ -61,13 +66,18 @@ class AuthService {
     String? program,
     String? code,
   }) async {
+    final cleanEmail = email.trim().toLowerCase();
+    final effectiveStudentId = (studentId != null && studentId.trim().isNotEmpty)
+        ? studentId.trim().toUpperCase()
+        : cleanEmail.split('@')[0].toUpperCase();
+
     final response = await ApiClient.post(
       ApiConstants.signUp,
       body: {
         'name': name.trim(),
-        'email': email.trim().toLowerCase(),
+        'email': cleanEmail,
         'password': password.trim(),
-        'studentId': studentId.trim().toUpperCase(),
+        'studentId': effectiveStudentId,
         'universityId': universityId,
         'university': universityName,
         'campusId': campusId,
