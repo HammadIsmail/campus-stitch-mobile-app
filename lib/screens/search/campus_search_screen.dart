@@ -766,45 +766,50 @@ class _CampusSearchScreenState extends State<CampusSearchScreen> with SingleTick
   // Bottom Search Bar
   Widget _buildBottomBar(AppColorsExtension colors) {
     final isSearching = _currentState == _AskState.searching;
+    final keyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 20),
+      padding: EdgeInsets.fromLTRB(16, 10, 16, keyboardOpen ? 10 : 16),
       decoration: BoxDecoration(
         color: colors.surface,
         border: Border(top: BorderSide(color: colors.border)),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Expanded(
             child: Container(
-              height: 48,
+              constraints: const BoxConstraints(minHeight: 46, maxHeight: 110),
               decoration: BoxDecoration(
                 color: isSearching ? colors.divider : colors.background,
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: colors.inputBorder),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 18),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
               child: TextField(
                 controller: _queryController,
                 enabled: !isSearching,
-                textAlignVertical: TextAlignVertical.center,
-                style: TextStyle(fontSize: 15, color: colors.textPrimary),
+                style: TextStyle(fontSize: 14, color: colors.textPrimary),
+                maxLines: null,
+                textInputAction: TextInputAction.send,
                 decoration: AppTheme.borderlessInput(
                   hintText: 'Koi bike ya cooler mil sakta hai?',
                   hintStyle: TextStyle(fontSize: 14, color: colors.textMuted),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
                 ),
+                onChanged: (_) => setState(() {}),
                 onSubmitted: (val) => _performSearch(val),
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
 
           if (isSearching)
             GestureDetector(
               onTap: () => setState(() => _currentState = _AskState.initial),
               child: Container(
-                width: 48,
-                height: 48,
+                width: 46,
+                height: 46,
                 decoration: BoxDecoration(
                   color: colors.textPrimary,
                   shape: BoxShape.circle,
@@ -817,14 +822,14 @@ class _CampusSearchScreenState extends State<CampusSearchScreen> with SingleTick
             GestureDetector(
               onTap: () => _performSearch(_queryController.text),
               child: Container(
-                width: 48,
-                height: 48,
+                width: 46,
+                height: 46,
                 decoration: BoxDecoration(
                   color: colors.primary,
                   shape: BoxShape.circle,
                 ),
                 alignment: Alignment.center,
-                child: const Icon(LucideIcons.send, size: 20, color: Colors.white),
+                child: const Icon(LucideIcons.send, size: 18, color: Colors.white),
               ),
             ),
         ],

@@ -94,6 +94,10 @@ class _ServicesScreenState extends State<ServicesScreen> {
   }
 
   void _openChat(CampusServiceModel service) {
+    final activeCampus = (service.campusId != null && service.campusId!.isNotEmpty)
+        ? service.campusId!
+        : AuthState.instance.activeCampusId;
+
     final conv = ConversationModel(
       id: 'conv_service_${service.id}',
       contactId: service.userId ?? 'contact_${service.provider.toLowerCase().replaceAll(RegExp(r'\s+'), '_')}',
@@ -105,7 +109,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
       lastMessage: 'Hi, I need details about ${service.name}.',
       lastTime: 'Just now',
       unreadCount: 0,
-      campusId: service.campusId ?? '',
+      campusId: activeCampus,
       messages: [],
     );
     Navigator.of(context).push(
