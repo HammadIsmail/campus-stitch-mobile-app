@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../core/state/auth_state.dart';
 import '../../core/storage/session_store.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/chat_model.dart';
@@ -35,7 +36,9 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
     try {
       final user = await SessionStore.getUser();
-      final campusId = user?.campusId ?? 'camp_fast_isb';
+      final campusId = AuthState.instance.activeCampusId.isNotEmpty
+          ? AuthState.instance.activeCampusId
+          : (user?.campusId ?? 'all');
       final convos = await ChatService.getConversations(campusId: campusId);
 
       if (mounted) {

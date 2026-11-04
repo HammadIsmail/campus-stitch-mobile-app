@@ -6,10 +6,7 @@ class ApiConstants {
   // Development: Use local Next.js server (http://localhost:3000) when running Flutter Web locally
   // Production: Use live Vercel deployment (https://campus-stitch.vercel.app)
   static String get baseUrl =>
-      _customBaseUrl ??
-      ((kIsWeb && kDebugMode)
-          ? 'http://localhost:3000'
-          : 'https://campus-stitch.vercel.app');
+      _customBaseUrl ?? 'https://campus-stitch.vercel.app';
 
   static set baseUrl(String url) => _customBaseUrl = url;
 

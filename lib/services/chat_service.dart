@@ -136,12 +136,25 @@ class ChatService {
     return null;
   }
 
+  static Future<Map<String, String>> _buildHeaders([String? campusId]) async {
+    final token = SessionStore.token;
+    final user = await SessionStore.getUser();
+    return {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+      'x-user-campus-id': campusId ?? user?.campusId ?? '',
+      if (user != null) 'x-user-name': user.fullName,
+    };
+  }
+
   /// Fetch user conversations (Inbox)
   static Future<List<ConversationModel>> getConversations({required String campusId}) async {
     try {
       final user = await SessionStore.getUser();
       final uri = Uri.parse('${ApiConstants.messages}?campus_id=$campusId&user_id=${user?.id ?? ""}');
-      final res = await http.get(uri).timeout(const Duration(seconds: 8));
+      final headers = await _buildHeaders(campusId);
+      final res = await http.get(uri, headers: headers).timeout(const Duration(seconds: 8));
 
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body);
@@ -167,7 +180,8 @@ class ChatService {
       final uri = Uri.parse(
         '${ApiConstants.messages}?campus_id=$campusId&conversation_id=$conversationId',
       );
-      final res = await http.get(uri).timeout(const Duration(seconds: 8));
+      final headers = await _buildHeaders(campusId);
+      final res = await http.get(uri, headers: headers).timeout(const Duration(seconds: 8));
 
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body);
@@ -207,9 +221,10 @@ class ChatService {
         'context_title': contextTitle ?? 'Discussion',
       };
 
+      final headers = await _buildHeaders(campusId);
       final res = await http.post(
         Uri.parse(ApiConstants.messages),
-        headers: {'Content-Type': 'application/json'},
+        headers: headers,
         body: jsonEncode(payload),
       ).timeout(const Duration(seconds: 8));
 
