@@ -28,9 +28,12 @@ class ChatMessageModel {
   bool get isVoice => voiceUrl != null && voiceUrl!.isNotEmpty;
 
   String get timeFormatted {
-    final hour = createdAt.hour.toString().padLeft(2, '0');
-    final minute = createdAt.minute.toString().padLeft(2, '0');
-    return '$hour:$minute';
+    final local = createdAt.toLocal();
+    final hour = local.hour;
+    final minute = local.minute.toString().padLeft(2, '0');
+    final period = hour >= 12 ? 'PM' : 'AM';
+    final h12 = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
+    return '$h12:$minute $period';
   }
 
   factory ChatMessageModel.fromJson(Map<String, dynamic> json, {String? currentUserId}) {
@@ -67,7 +70,7 @@ class ChatMessageModel {
       duration: json['duration']?.toString(),
       waveformPeaks: peaks,
       createdAt: json['created_at'] != null
-          ? DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now()
+          ? DateTime.tryParse(json['created_at'].toString())?.toLocal() ?? DateTime.now()
           : DateTime.now(),
       isMe: isMe,
       status: json['status']?.toString() ?? 'sent',
@@ -103,6 +106,35 @@ class ConversationModel {
   int unreadCount;
   final String campusId;
   final List<ChatMessageModel> messages;
+
+  String get timeFormatted {
+    if (lastTime.isEmpty || lastTime == 'Just now') return 'Just now';
+    try {
+      final dt = DateTime.tryParse(lastTime)?.toLocal();
+      if (dt == null) return lastTime;
+      final now = DateTime.now();
+      final diff = now.difference(dt);
+
+      if (diff.inMinutes < 1) {
+        return 'Just now';
+      } else if (diff.inMinutes < 60) {
+        return '${diff.inMinutes}m ago';
+      } else if (diff.inHours < 24 && dt.day == now.day) {
+        final hour = dt.hour;
+        final minute = dt.minute.toString().padLeft(2, '0');
+        final period = hour >= 12 ? 'PM' : 'AM';
+        final h12 = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
+        return '$h12:$minute $period';
+      } else if (diff.inDays < 7) {
+        final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        return days[dt.weekday - 1];
+      } else {
+        return '${dt.day}/${dt.month}';
+      }
+    } catch (_) {
+      return lastTime;
+    }
+  }
 
   ConversationModel({
     required this.id,

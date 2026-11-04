@@ -145,18 +145,22 @@ class _MessagesScreenState extends State<MessagesScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              convo.contactName,
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: isUnread ? FontWeight.w800 : FontWeight.w700,
-                                color: colors.textPrimary,
+                            Expanded(
+                              child: Text(
+                                convo.contactName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: isUnread ? FontWeight.w800 : FontWeight.w700,
+                                  color: colors.textPrimary,
+                                ),
                               ),
                             ),
+                            const SizedBox(width: 8),
                             Text(
-                              convo.lastTime,
+                              convo.timeFormatted,
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w500,
