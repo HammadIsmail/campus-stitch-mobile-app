@@ -111,28 +111,46 @@ class ConversationModel {
     if (lastTime.isEmpty || lastTime == 'Just now') return 'Just now';
     try {
       final dt = DateTime.tryParse(lastTime)?.toLocal();
-      if (dt == null) return lastTime;
+      if (dt == null) {
+        if (lastTime.contains('T')) {
+          final parts = lastTime.split('T')[0].split('-');
+          if (parts.length == 3) return '${parts[2]}/${parts[1]}';
+        }
+        return 'Recently';
+      }
       final now = DateTime.now();
+      if (dt.isAfter(now)) return 'Just now';
       final diff = now.difference(dt);
 
       if (diff.inMinutes < 1) {
         return 'Just now';
       } else if (diff.inMinutes < 60) {
         return '${diff.inMinutes}m ago';
-      } else if (diff.inHours < 24 && dt.day == now.day) {
+      }
+
+      final isToday = dt.year == now.year && dt.month == now.month && dt.day == now.day;
+      if (isToday) {
         final hour = dt.hour;
         final minute = dt.minute.toString().padLeft(2, '0');
         final period = hour >= 12 ? 'PM' : 'AM';
         final h12 = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
         return '$h12:$minute $period';
-      } else if (diff.inDays < 7) {
+      }
+
+      final yesterday = now.subtract(const Duration(days: 1));
+      final isYesterday = dt.year == yesterday.year && dt.month == yesterday.month && dt.day == yesterday.day;
+      if (isYesterday) {
+        return 'Yesterday';
+      }
+
+      if (diff.inDays < 7) {
         final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
         return days[dt.weekday - 1];
-      } else {
-        return '${dt.day}/${dt.month}';
       }
+
+      return '${dt.day}/${dt.month}/${dt.year.toString().substring(2)}';
     } catch (_) {
-      return lastTime;
+      return 'Recently';
     }
   }
 
